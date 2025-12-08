@@ -1,0 +1,261 @@
+# Default values for volleyball-bot
+# This is a YAML-formatted file.
+
+# Global settings
+global:
+  projectId: "atikot-org-share-project"
+  region: "us-central1"
+  environment: "production"
+
+# Bot API service configuration
+botApi:
+  enabled: true
+  replicaCount: 2
+
+  image:
+    repository: us-central1-docker.pkg.dev/atikot-org-share-project/volleyball-images/bot-api
+    pullPolicy: Always
+    tag: "latest"
+
+  serviceAccount:
+    create: true
+    annotations:
+      iam.gke.io/gcp-service-account: "bot-api-sa@atikot-org-share-project.iam.gserviceaccount.com"
+    name: "bot-api"
+
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 80
+
+  env:
+    - name: ENVIRONMENT
+      value: "production"
+    - name: GCP_PROJECT_ID
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.annotations['projectId']
+    - name: DB_HOST
+      value: "127.0.0.1"  # Cloud SQL Proxy sidecar
+    - name: DB_PORT
+      value: "5432"
+    - name: DB_NAME
+      value: "volleyball"
+    - name: DB_USER
+      value: "volleyball_app"
+    - name: API_HOST
+      value: "0.0.0.0"
+    - name: API_PORT
+      value: "8080"
+
+  # Cloud SQL Proxy sidecar
+  cloudSqlProxy:
+    enabled: true
+    image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
+    instanceConnectionName: "atikot-org-share-project:us-central1:volleyball-db"
+
+  ingress:
+    enabled: true
+    className: "gce"
+    annotations:
+      kubernetes.io/ingress.class: "gce"
+      # Add SSL certificate annotation if using managed certificates
+      # networking.gke.io/managed-certificates: "volleyball-bot-cert"
+    hosts:
+      - host: bot.example.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+# CronJob configurations
+jobs:
+  # Trivia Tuesday
+  triviaTuesday:
+    enabled: true
+    schedule: "0 10 * * 2"  # Every Tuesday at 10:00 AM
+    timezone: "Asia/Jerusalem"
+    image:
+      repository: us-central1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
+      tag: "latest"
+    command: ["python", "trivia_job.py", "trivia_tuesday"]
+    serviceAccount:
+      name: "trivia-job"
+      annotations:
+        iam.gke.io/gcp-service-account: "trivia-job-sa@atikot-org-share-project.iam.gserviceaccount.com"
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2000m
+        memory: 2Gi
+
+  # Trivia Wednesday
+  triviaWednesday:
+    enabled: true
+    schedule: "0 10 * * 3"  # Every Wednesday at 10:00 AM
+    timezone: "Asia/Jerusalem"
+    image:
+      repository: us-central1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
+      tag: "latest"
+    command: ["python", "trivia_job.py", "trivia_wednesday"]
+    serviceAccount:
+      name: "trivia-job"
+      annotations:
+        iam.gke.io/gcp-service-account: "trivia-job-sa@atikot-org-share-project.iam.gserviceaccount.com"
+    resources:
+      requests:
+        cpu: 500m
+        memory: 1Gi
+      limits:
+        cpu: 2000m
+        memory: 2Gi
+
+  # Game Poll Tuesday
+  gamePollTuesday:
+    enabled: true
+    schedule: "0 9 * * 2"  # Every Tuesday at 9:00 AM
+    timezone: "Asia/Jerusalem"
+    image:
+      repository: us-central1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
+      tag: "latest"
+    command: ["python", "game_poll_job.py", "game_poll_tuesday"]
+    serviceAccount:
+      name: "game-poll-job"
+      annotations:
+        iam.gke.io/gcp-service-account: "game-poll-job-sa@atikot-org-share-project.iam.gserviceaccount.com"
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+
+  # Game Poll Wednesday
+  gamePollWednesday:
+    enabled: true
+    schedule: "0 9 * * 3"  # Every Wednesday at 9:00 AM
+    timezone: "Asia/Jerusalem"
+    image:
+      repository: us-central1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
+      tag: "latest"
+    command: ["python", "game_poll_job.py", "game_poll_wednesday"]
+    serviceAccount:
+      name: "game-poll-job"
+      annotations:
+        iam.gke.io/gcp-service-account: "game-poll-job-sa@atikot-org-share-project.iam.gserviceaccount.com"
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+
+  # Notification Monday
+  notificationMonday:
+    enabled: true
+    schedule: "0 8 * * 1"  # Every Monday at 8:00 AM
+    timezone: "Asia/Jerusalem"
+    image:
+      repository: us-central1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
+      tag: "latest"
+    command: ["python", "notification_job.py", "notification_monday"]
+    serviceAccount:
+      name: "notification-job"
+      annotations:
+        iam.gke.io/gcp-service-account: "notification-job-sa@atikot-org-share-project.iam.gserviceaccount.com"
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+
+  # Notification Thursday
+  notificationThursday:
+    enabled: true
+    schedule: "0 8 * * 4"  # Every Thursday at 8:00 AM
+    timezone: "Asia/Jerusalem"
+    image:
+      repository: us-central1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
+      tag: "latest"
+    command: ["python", "notification_job.py", "notification_thursday"]
+    serviceAccount:
+      name: "notification-job"
+      annotations:
+        iam.gke.io/gcp-service-account: "notification-job-sa@atikot-org-share-project.iam.gserviceaccount.com"
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+
+  # Budget Analytics (daily at 6am)
+  budgetAnalytics:
+    enabled: true
+    schedule: "0 6 * * *"  # Every day at 6:00 AM
+    timezone: "Asia/Jerusalem"
+    image:
+      repository: us-central1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
+      tag: "latest"
+    command: ["python", "budget_analytics_job.py", "budget_analytics"]
+    serviceAccount:
+      name: "bot-api"  # Reuse bot-api service account
+      annotations:
+        iam.gke.io/gcp-service-account: "bot-api-sa@atikot-org-share-project.iam.gserviceaccount.com"
+    resources:
+      requests:
+        cpu: 250m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+
+  # Common job environment variables
+  env:
+    - name: GCP_PROJECT_ID
+      value: "atikot-org-share-project"
+    - name: DB_HOST
+      value: "127.0.0.1"  # Cloud SQL Proxy
+    - name: DB_PORT
+      value: "5432"
+    - name: DB_NAME
+      value: "volleyball"
+    - name: DB_USER
+      value: "volleyball_app"
+    - name: TELEGRAM_CHAT_ID
+      value: "-4707740966"  # Set this to your Telegram chat ID
+
+  # Cloud SQL Proxy for jobs
+  cloudSqlProxy:
+    enabled: true
+    image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
+    instanceConnectionName: "atikot-org-share-project:us-central1:volleyball-db"
+
+# Network Policy
+networkPolicy:
+  enabled: false
+  policyTypes:
+    - Ingress
+    - Egress

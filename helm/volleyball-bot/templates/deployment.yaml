@@ -1,0 +1,97 @@
+{{- if .Values.botApi.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "volleyball-bot.fullname" . }}-bot-api
+  labels:
+    {{- include "volleyball-bot.labels" . | nindent 4 }}
+    app.kubernetes.io/component: bot-api
+spec:
+  {{- if not .Values.botApi.autoscaling.enabled }}
+  replicas: {{ .Values.botApi.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "volleyball-bot.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: bot-api
+  template:
+    metadata:
+      annotations:
+        projectId: {{ .Values.global.projectId }}
+      labels:
+        {{- include "volleyball-bot.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: bot-api
+    spec:
+      serviceAccountName: {{ .Values.botApi.serviceAccount.name }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      # Main bot-api container
+      - name: bot-api
+        image: "{{ .Values.botApi.image.repository }}:{{ .Values.botApi.image.tag }}"
+        imagePullPolicy: {{ .Values.botApi.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.botApi.service.targetPort }}
+          protocol: TCP
+        env:
+        {{- range .Values.botApi.env }}
+        - name: {{ .name }}
+          {{- if .value }}
+          value: {{ .value | quote }}
+          {{- else if .valueFrom }}
+          valueFrom:
+            {{- toYaml .valueFrom | nindent 12 }}
+          {{- end }}
+        {{- end }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          {{- toYaml .Values.botApi.resources | nindent 10 }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+
+      {{- if .Values.botApi.cloudSqlProxy.enabled }}
+      # Cloud SQL Proxy sidecar
+      - name: cloud-sql-proxy
+        image: {{ .Values.botApi.cloudSqlProxy.image }}
+        args:
+        - "--structured-logs"
+        - "--port=5432"
+        - "--private-ip"
+        - "{{ .Values.botApi.cloudSqlProxy.instanceConnectionName }}"
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+      {{- end }}
+{{- end }}

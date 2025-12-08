@@ -1,0 +1,60 @@
+{{- if .Values.networkPolicy.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "volleyball-bot.fullname" . }}-bot-api
+  labels:
+    {{- include "volleyball-bot.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "volleyball-bot.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: bot-api
+  policyTypes:
+  {{- range .Values.networkPolicy.policyTypes }}
+  - {{ . }}
+  {{- end }}
+  ingress:
+  # Allow ingress from ingress controller
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8080
+  # Allow health checks from GKE
+  - from:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  # Allow DNS
+  - to:
+    - namespaceSelector: {}
+      podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+  # Allow Cloud SQL Proxy connection
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 5432
+  # Allow HTTPS for Telegram API
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 443
+  # Allow HTTP for Telegram API
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: TCP
+      port: 80
+{{- end }}

@@ -1,0 +1,13 @@
+apiVersion: v2
+name: volleyball-bot
+description: Helm chart for Volleyball Community Bot platform
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - volleyball
+  - telegram
+  - bot
+  - gcp
+maintainers:
+  - name: Volleyball Community

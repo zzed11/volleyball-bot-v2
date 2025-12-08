@@ -1,0 +1,474 @@
+{{- if .Values.jobs.triviaTuesday.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "volleyball-bot.fullname" . }}-trivia-tuesday
+  labels:
+    {{- include "volleyball-bot.labels" . | nindent 4 }}
+    app.kubernetes.io/component: trivia-job
+spec:
+  schedule: "{{ .Values.jobs.triviaTuesday.schedule }}"
+  timeZone: "{{ .Values.jobs.triviaTuesday.timezone }}"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ .Values.jobs.triviaTuesday.serviceAccount.name }}
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            fsGroup: 1000
+          containers:
+          - name: trivia-job
+            image: "{{ .Values.jobs.triviaTuesday.image.repository }}:{{ .Values.jobs.triviaTuesday.image.tag }}"
+            command: {{ .Values.jobs.triviaTuesday.command }}
+            env:
+            {{- range .Values.jobs.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+            - name: JOB_NAME
+              value: "trivia_tuesday"
+            resources:
+              {{- toYaml .Values.jobs.triviaTuesday.resources | nindent 14 }}
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+
+          {{- if .Values.jobs.cloudSqlProxy.enabled }}
+          - name: cloud-sql-proxy
+            image: {{ .Values.jobs.cloudSqlProxy.image }}
+            args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "--private-ip"
+            - "{{ .Values.jobs.cloudSqlProxy.instanceConnectionName }}"
+            securityContext:
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 200m
+                memory: 256Mi
+          {{- end }}
+{{- end }}
+
+---
+{{- if .Values.jobs.triviaWednesday.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "volleyball-bot.fullname" . }}-trivia-wednesday
+  labels:
+    {{- include "volleyball-bot.labels" . | nindent 4 }}
+    app.kubernetes.io/component: trivia-job
+spec:
+  schedule: "{{ .Values.jobs.triviaWednesday.schedule }}"
+  timeZone: "{{ .Values.jobs.triviaWednesday.timezone }}"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ .Values.jobs.triviaWednesday.serviceAccount.name }}
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            fsGroup: 1000
+          containers:
+          - name: trivia-job
+            image: "{{ .Values.jobs.triviaWednesday.image.repository }}:{{ .Values.jobs.triviaWednesday.image.tag }}"
+            command: {{ .Values.jobs.triviaWednesday.command }}
+            env:
+            {{- range .Values.jobs.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+            - name: JOB_NAME
+              value: "trivia_wednesday"
+            resources:
+              {{- toYaml .Values.jobs.triviaWednesday.resources | nindent 14 }}
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+
+          {{- if .Values.jobs.cloudSqlProxy.enabled }}
+          - name: cloud-sql-proxy
+            image: {{ .Values.jobs.cloudSqlProxy.image }}
+            args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "--private-ip"
+            - "{{ .Values.jobs.cloudSqlProxy.instanceConnectionName }}"
+            securityContext:
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 200m
+                memory: 256Mi
+          {{- end }}
+{{- end }}
+
+---
+{{- if .Values.jobs.gamePollTuesday.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "volleyball-bot.fullname" . }}-game-poll-tuesday
+  labels:
+    {{- include "volleyball-bot.labels" . | nindent 4 }}
+    app.kubernetes.io/component: game-poll-job
+spec:
+  schedule: "{{ .Values.jobs.gamePollTuesday.schedule }}"
+  timeZone: "{{ .Values.jobs.gamePollTuesday.timezone }}"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ .Values.jobs.gamePollTuesday.serviceAccount.name }}
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            fsGroup: 1000
+          containers:
+          - name: game-poll-job
+            image: "{{ .Values.jobs.gamePollTuesday.image.repository }}:{{ .Values.jobs.gamePollTuesday.image.tag }}"
+            command: {{ .Values.jobs.gamePollTuesday.command }}
+            env:
+            {{- range .Values.jobs.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+            - name: JOB_NAME
+              value: "game_poll_tuesday"
+            resources:
+              {{- toYaml .Values.jobs.gamePollTuesday.resources | nindent 14 }}
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+
+          {{- if .Values.jobs.cloudSqlProxy.enabled }}
+          - name: cloud-sql-proxy
+            image: {{ .Values.jobs.cloudSqlProxy.image }}
+            args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "--private-ip"
+            - "{{ .Values.jobs.cloudSqlProxy.instanceConnectionName }}"
+            securityContext:
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 200m
+                memory: 256Mi
+          {{- end }}
+{{- end }}
+
+---
+{{- if .Values.jobs.gamePollWednesday.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "volleyball-bot.fullname" . }}-game-poll-wednesday
+  labels:
+    {{- include "volleyball-bot.labels" . | nindent 4 }}
+    app.kubernetes.io/component: game-poll-job
+spec:
+  schedule: "{{ .Values.jobs.gamePollWednesday.schedule }}"
+  timeZone: "{{ .Values.jobs.gamePollWednesday.timezone }}"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ .Values.jobs.gamePollWednesday.serviceAccount.name }}
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            fsGroup: 1000
+          containers:
+          - name: game-poll-job
+            image: "{{ .Values.jobs.gamePollWednesday.image.repository }}:{{ .Values.jobs.gamePollWednesday.image.tag }}"
+            command: {{ .Values.jobs.gamePollWednesday.command }}
+            env:
+            {{- range .Values.jobs.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+            - name: JOB_NAME
+              value: "game_poll_wednesday"
+            resources:
+              {{- toYaml .Values.jobs.gamePollWednesday.resources | nindent 14 }}
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+
+          {{- if .Values.jobs.cloudSqlProxy.enabled }}
+          - name: cloud-sql-proxy
+            image: {{ .Values.jobs.cloudSqlProxy.image }}
+            args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "--private-ip"
+            - "{{ .Values.jobs.cloudSqlProxy.instanceConnectionName }}"
+            securityContext:
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 200m
+                memory: 256Mi
+          {{- end }}
+{{- end }}
+
+---
+{{- if .Values.jobs.notificationMonday.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "volleyball-bot.fullname" . }}-notification-monday
+  labels:
+    {{- include "volleyball-bot.labels" . | nindent 4 }}
+    app.kubernetes.io/component: notification-job
+spec:
+  schedule: "{{ .Values.jobs.notificationMonday.schedule }}"
+  timeZone: "{{ .Values.jobs.notificationMonday.timezone }}"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ .Values.jobs.notificationMonday.serviceAccount.name }}
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            fsGroup: 1000
+          containers:
+          - name: notification-job
+            image: "{{ .Values.jobs.notificationMonday.image.repository }}:{{ .Values.jobs.notificationMonday.image.tag }}"
+            command: {{ .Values.jobs.notificationMonday.command }}
+            env:
+            {{- range .Values.jobs.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+            - name: JOB_NAME
+              value: "notification_monday"
+            resources:
+              {{- toYaml .Values.jobs.notificationMonday.resources | nindent 14 }}
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+
+          {{- if .Values.jobs.cloudSqlProxy.enabled }}
+          - name: cloud-sql-proxy
+            image: {{ .Values.jobs.cloudSqlProxy.image }}
+            args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "--private-ip"
+            - "{{ .Values.jobs.cloudSqlProxy.instanceConnectionName }}"
+            securityContext:
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 200m
+                memory: 256Mi
+          {{- end }}
+{{- end }}
+
+---
+{{- if .Values.jobs.notificationThursday.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "volleyball-bot.fullname" . }}-notification-thursday
+  labels:
+    {{- include "volleyball-bot.labels" . | nindent 4 }}
+    app.kubernetes.io/component: notification-job
+spec:
+  schedule: "{{ .Values.jobs.notificationThursday.schedule }}"
+  timeZone: "{{ .Values.jobs.notificationThursday.timezone }}"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ .Values.jobs.notificationThursday.serviceAccount.name }}
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            fsGroup: 1000
+          containers:
+          - name: notification-job
+            image: "{{ .Values.jobs.notificationThursday.image.repository }}:{{ .Values.jobs.notificationThursday.image.tag }}"
+            command: {{ .Values.jobs.notificationThursday.command }}
+            env:
+            {{- range .Values.jobs.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+            - name: JOB_NAME
+              value: "notification_thursday"
+            resources:
+              {{- toYaml .Values.jobs.notificationThursday.resources | nindent 14 }}
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+
+          {{- if .Values.jobs.cloudSqlProxy.enabled }}
+          - name: cloud-sql-proxy
+            image: {{ .Values.jobs.cloudSqlProxy.image }}
+            args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "--private-ip"
+            - "{{ .Values.jobs.cloudSqlProxy.instanceConnectionName }}"
+            securityContext:
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 200m
+                memory: 256Mi
+          {{- end }}
+{{- end }}
+
+---
+{{- if .Values.jobs.budgetAnalytics.enabled }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "volleyball-bot.fullname" . }}-budget-analytics
+  labels:
+    {{- include "volleyball-bot.labels" . | nindent 4 }}
+    app.kubernetes.io/component: budget-analytics
+spec:
+  schedule: "{{ .Values.jobs.budgetAnalytics.schedule }}"
+  timeZone: "{{ .Values.jobs.budgetAnalytics.timezone }}"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: {{ .Values.jobs.budgetAnalytics.serviceAccount.name }}
+          restartPolicy: OnFailure
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            fsGroup: 1000
+          containers:
+          - name: budget-analytics
+            image: "{{ .Values.jobs.budgetAnalytics.image.repository }}:{{ .Values.jobs.budgetAnalytics.image.tag }}"
+            command: {{ .Values.jobs.budgetAnalytics.command }}
+            env:
+            {{- range .Values.jobs.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+            - name: JOB_NAME
+              value: "budget_analytics"
+            resources:
+              {{- toYaml .Values.jobs.budgetAnalytics.resources | nindent 14 }}
+            securityContext:
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+
+          {{- if .Values.jobs.cloudSqlProxy.enabled }}
+          - name: cloud-sql-proxy
+            image: {{ .Values.jobs.cloudSqlProxy.image }}
+            args:
+            - "--structured-logs"
+            - "--port=5432"
+            - "--private-ip"
+            - "{{ .Values.jobs.cloudSqlProxy.instanceConnectionName }}"
+            securityContext:
+              runAsNonRoot: true
+              allowPrivilegeEscalation: false
+              capabilities:
+                drop:
+                - ALL
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 200m
+                memory: 256Mi
+          {{- end }}
+{{- end }}
