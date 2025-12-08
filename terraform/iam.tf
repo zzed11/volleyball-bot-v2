@@ -176,3 +176,14 @@ resource "google_service_account_iam_member" "github_actions_workload_identity" 
   role               = "roles/iam.workloadIdentityUser"
   member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool[0].name}/attribute.repository/${var.github_repository}"
 }
+
+# Cloud Build IAM permissions
+resource "google_project_iam_member" "cloudbuild_artifact_registry" {
+  project = var.project_id
+  role    = "roles/artifactregistry.writer"
+  member  = "serviceAccount:${data.google_project.project.number}@cloudbuild.gserviceaccount.com"
+}
+
+data "google_project" "project" {
+  project_id = var.project_id
+}
