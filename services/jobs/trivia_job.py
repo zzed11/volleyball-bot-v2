@@ -16,7 +16,7 @@ from datetime import datetime
 from typing import List, Dict
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../bot-api'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../bot-api"))
 
 from google.cloud import aiplatform
 import vertexai
@@ -37,12 +37,11 @@ class TriviaGenerator:
         self.model_name = config.vertex_ai_model
 
         # Initialize Vertex AI
-        vertexai.init(
-            project=config.project_id,
-            location=config.vertex_ai_location
-        )
+        vertexai.init(project=config.project_id, location=config.vertex_ai_location)
 
-    def generate_trivia_questions(self, topic: str = "volleyball", count: int = 1) -> List[Dict]:
+    def generate_trivia_questions(
+        self, topic: str = "volleyball", count: int = 1
+    ) -> List[Dict]:
         """
         Generate trivia questions using Gemini.
 
@@ -91,6 +90,7 @@ Only return the JSON array, no additional text.
 
             # Parse JSON response
             import json
+
             questions = json.loads(text)
 
             logger.info(f"Generated {len(questions)} trivia questions")
@@ -99,11 +99,13 @@ Only return the JSON array, no additional text.
         except Exception as e:
             logger.error(f"Error generating trivia: {e}", exc_info=True)
             # Return a fallback question
-            return [{
-                "question": "What is the standard height of a volleyball net for men's competition?",
-                "options": ["2.24m", "2.43m", "2.50m", "2.35m"],
-                "correct_answer": 1
-            }]
+            return [
+                {
+                    "question": "What is the standard height of a volleyball net for men's competition?",
+                    "options": ["2.24m", "2.43m", "2.50m", "2.35m"],
+                    "correct_answer": 1,
+                }
+            ]
 
 
 async def run_trivia_job(job_name: str = "trivia_tuesday"):
@@ -147,7 +149,7 @@ async def run_trivia_job(job_name: str = "trivia_tuesday"):
             chat_id=config.telegram_chat_id,
             question=question_data["question"],
             options=question_data["options"],
-            is_anonymous=False
+            is_anonymous=False,
         )
 
         # Record poll in database
@@ -158,7 +160,7 @@ async def run_trivia_job(job_name: str = "trivia_tuesday"):
             day_of_week=datetime.utcnow().strftime("%A"),
             title=question_data["question"],
             questions={"questions": questions},
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
         db_session.add(poll)
         db_session.commit()
@@ -168,7 +170,7 @@ async def run_trivia_job(job_name: str = "trivia_tuesday"):
             db_session,
             job_name=job_name,
             status="success",
-            payload={"poll_id": poll_id, "question": question_data["question"]}
+            payload={"poll_id": poll_id, "question": question_data["question"]},
         )
 
         logger.info(f"Trivia job completed successfully. Poll ID: {poll_id}")
@@ -178,10 +180,7 @@ async def run_trivia_job(job_name: str = "trivia_tuesday"):
 
         if db_session:
             record_job_run(
-                db_session,
-                job_name=job_name,
-                status="failed",
-                error_message=str(e)
+                db_session, job_name=job_name, status="failed", error_message=str(e)
             )
 
         sys.exit(1)
@@ -197,7 +196,9 @@ async def run_trivia_job(job_name: str = "trivia_tuesday"):
 def main():
     """Entry point"""
     # Determine job name from command line or environment
-    job_name = sys.argv[1] if len(sys.argv) > 1 else os.getenv("JOB_NAME", "trivia_tuesday")
+    job_name = (
+        sys.argv[1] if len(sys.argv) > 1 else os.getenv("JOB_NAME", "trivia_tuesday")
+    )
 
     logger.info(f"Starting trivia job: {job_name}")
     asyncio.run(run_trivia_job(job_name))

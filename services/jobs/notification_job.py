@@ -15,7 +15,7 @@ import os
 from datetime import datetime, timedelta
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../bot-api'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../bot-api"))
 
 from aiogram import Bot
 from sqlalchemy import select
@@ -53,11 +53,16 @@ async def run_notification_job(job_name: str = "notification_monday"):
         logger.info("Finding games that need notification...")
         next_week = datetime.utcnow() + timedelta(days=7)
 
-        games = db_session.query(GameSchedule).filter(
-            GameSchedule.game_date > datetime.utcnow(),
-            GameSchedule.game_date <= next_week,
-            GameSchedule.notified == False
-        ).order_by(GameSchedule.game_date).all()
+        games = (
+            db_session.query(GameSchedule)
+            .filter(
+                GameSchedule.game_date > datetime.utcnow(),
+                GameSchedule.game_date <= next_week,
+                GameSchedule.notified == False,
+            )
+            .order_by(GameSchedule.game_date)
+            .all()
+        )
 
         if not games:
             logger.info("No games need notification at this time")
@@ -65,7 +70,7 @@ async def run_notification_job(job_name: str = "notification_monday"):
                 db_session,
                 job_name=job_name,
                 status="success",
-                payload={"games_notified": 0}
+                payload={"games_notified": 0},
             )
             return
 
@@ -91,9 +96,7 @@ async def run_notification_job(job_name: str = "notification_monday"):
             # Send notification
             logger.info(f"Sending notification for game on {game_date_str}")
             await send_telegram_message(
-                bot=bot,
-                chat_id=config.telegram_chat_id,
-                text=message
+                bot=bot, chat_id=config.telegram_chat_id, text=message
             )
 
             # Mark game as notified
@@ -110,11 +113,13 @@ async def run_notification_job(job_name: str = "notification_monday"):
             status="success",
             payload={
                 "games_notified": notified_count,
-                "game_ids": [g.id for g in games]
-            }
+                "game_ids": [g.id for g in games],
+            },
         )
 
-        logger.info(f"Notification job completed successfully. Notified {notified_count} game(s)")
+        logger.info(
+            f"Notification job completed successfully. Notified {notified_count} game(s)"
+        )
 
     except Exception as e:
         logger.error(f"Notification job failed: {e}", exc_info=True)
@@ -122,10 +127,7 @@ async def run_notification_job(job_name: str = "notification_monday"):
         if db_session:
             db_session.rollback()
             record_job_run(
-                db_session,
-                job_name=job_name,
-                status="failed",
-                error_message=str(e)
+                db_session, job_name=job_name, status="failed", error_message=str(e)
             )
 
         sys.exit(1)
@@ -141,7 +143,11 @@ async def run_notification_job(job_name: str = "notification_monday"):
 def main():
     """Entry point"""
     # Determine job name from command line or environment
-    job_name = sys.argv[1] if len(sys.argv) > 1 else os.getenv("JOB_NAME", "notification_monday")
+    job_name = (
+        sys.argv[1]
+        if len(sys.argv) > 1
+        else os.getenv("JOB_NAME", "notification_monday")
+    )
 
     logger.info(f"Starting notification job: {job_name}")
     asyncio.run(run_notification_job(job_name))

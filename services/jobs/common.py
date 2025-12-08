@@ -1,4 +1,5 @@
 """Common utilities for job scripts"""
+
 import os
 import sys
 import logging
@@ -11,7 +12,7 @@ from aiogram import Bot
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -75,12 +76,18 @@ def get_db_session(config: JobConfig):
     return Session()
 
 
-def record_job_run(session, job_name: str, status: str, error_message: Optional[str] = None, payload: Optional[dict] = None):
+def record_job_run(
+    session,
+    job_name: str,
+    status: str,
+    error_message: Optional[str] = None,
+    payload: Optional[dict] = None,
+):
     """Record job run in database"""
     from datetime import datetime
 
     # Import here to avoid circular dependency
-    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../bot-api'))
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../bot-api"))
     from db.models import JobDefinition, JobRun
 
     # Find job definition
@@ -95,10 +102,10 @@ def record_job_run(session, job_name: str, status: str, error_message: Optional[
         job_id=job.id,
         scheduled_time=datetime.utcnow(),
         started_at=datetime.utcnow(),
-        finished_at=datetime.utcnow() if status in ['success', 'failed'] else None,
+        finished_at=datetime.utcnow() if status in ["success", "failed"] else None,
         status=status,
         error_message=error_message,
-        payload=payload
+        payload=payload,
     )
 
     session.add(job_run)
@@ -107,13 +114,12 @@ def record_job_run(session, job_name: str, status: str, error_message: Optional[
     logger.info(f"Job run recorded: {job_name} - {status}")
 
 
-async def send_telegram_poll(bot: Bot, chat_id: str, question: str, options: list, is_anonymous: bool = False) -> str:
+async def send_telegram_poll(
+    bot: Bot, chat_id: str, question: str, options: list, is_anonymous: bool = False
+) -> str:
     """Send a poll to Telegram chat and return poll_id"""
     message = await bot.send_poll(
-        chat_id=chat_id,
-        question=question,
-        options=options,
-        is_anonymous=is_anonymous
+        chat_id=chat_id, question=question, options=options, is_anonymous=is_anonymous
     )
     return message.poll.id
 

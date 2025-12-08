@@ -15,7 +15,7 @@ import os
 from datetime import datetime, timedelta
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../bot-api'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../bot-api"))
 
 from aiogram import Bot
 from sqlalchemy import select
@@ -53,10 +53,15 @@ async def run_game_poll_job(job_name: str = "game_poll_tuesday"):
         logger.info("Finding next scheduled game...")
         next_week = datetime.utcnow() + timedelta(days=7)
 
-        game = db_session.query(GameSchedule).filter(
-            GameSchedule.game_date > datetime.utcnow(),
-            GameSchedule.game_date <= next_week
-        ).order_by(GameSchedule.game_date).first()
+        game = (
+            db_session.query(GameSchedule)
+            .filter(
+                GameSchedule.game_date > datetime.utcnow(),
+                GameSchedule.game_date <= next_week,
+            )
+            .order_by(GameSchedule.game_date)
+            .first()
+        )
 
         if not game:
             logger.warning("No upcoming games found in the next 7 days")
@@ -74,11 +79,7 @@ async def run_game_poll_job(job_name: str = "game_poll_tuesday"):
         question = f"Who's coming to the game on {game_date_str}?"
 
         # Poll options
-        options = [
-            "I'm in!",
-            "Maybe",
-            "Can't make it"
-        ]
+        options = ["I'm in!", "Maybe", "Can't make it"]
 
         # Send poll to Telegram
         logger.info(f"Sending game poll to Telegram chat: {config.telegram_chat_id}")
@@ -100,7 +101,7 @@ async def run_game_poll_job(job_name: str = "game_poll_tuesday"):
             chat_id=config.telegram_chat_id,
             question=question,
             options=options,
-            is_anonymous=False
+            is_anonymous=False,
         )
 
         # Record poll in database
@@ -111,7 +112,7 @@ async def run_game_poll_job(job_name: str = "game_poll_tuesday"):
             day_of_week=datetime.utcnow().strftime("%A"),
             title=question,
             game_id=game_id,
-            created_at=datetime.utcnow()
+            created_at=datetime.utcnow(),
         )
         db_session.add(poll)
         db_session.commit()
@@ -124,8 +125,8 @@ async def run_game_poll_job(job_name: str = "game_poll_tuesday"):
             payload={
                 "poll_id": poll_id,
                 "game_id": game_id,
-                "game_date": game_date_str if game else None
-            }
+                "game_date": game_date_str if game else None,
+            },
         )
 
         logger.info(f"Game poll job completed successfully. Poll ID: {poll_id}")
@@ -135,10 +136,7 @@ async def run_game_poll_job(job_name: str = "game_poll_tuesday"):
 
         if db_session:
             record_job_run(
-                db_session,
-                job_name=job_name,
-                status="failed",
-                error_message=str(e)
+                db_session, job_name=job_name, status="failed", error_message=str(e)
             )
 
         sys.exit(1)
@@ -154,7 +152,9 @@ async def run_game_poll_job(job_name: str = "game_poll_tuesday"):
 def main():
     """Entry point"""
     # Determine job name from command line or environment
-    job_name = sys.argv[1] if len(sys.argv) > 1 else os.getenv("JOB_NAME", "game_poll_tuesday")
+    job_name = (
+        sys.argv[1] if len(sys.argv) > 1 else os.getenv("JOB_NAME", "game_poll_tuesday")
+    )
 
     logger.info(f"Starting game poll job: {job_name}")
     asyncio.run(run_game_poll_job(job_name))

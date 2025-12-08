@@ -17,14 +17,19 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 # Add parent directory to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../bot-api'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../bot-api"))
 
 from sqlalchemy import select, and_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from db.models import (
-    GameSchedule, EventPayment, Player, Poll, PollVote,
-    BudgetCache, ForecastCache
+    GameSchedule,
+    EventPayment,
+    Player,
+    Poll,
+    PollVote,
+    BudgetCache,
+    ForecastCache,
 )
 from db.database import AsyncSessionLocal
 from common import JobConfig, record_job_run, get_db_session
@@ -40,10 +45,7 @@ async def compute_budget_for_game(db: AsyncSession, game: GameSchedule) -> dict:
         select(EventPayment, Player)
         .join(Player, EventPayment.player_id == Player.id)
         .where(
-            and_(
-                EventPayment.game_id == game.id,
-                EventPayment.status == "confirmed"
-            )
+            and_(EventPayment.game_id == game.id, EventPayment.status == "confirmed")
         )
     )
     payments_with_players = payments_result.all()
@@ -54,12 +56,9 @@ async def compute_budget_for_game(db: AsyncSession, game: GameSchedule) -> dict:
 
     # Get registered players from game poll
     poll_result = await db.execute(
-        select(Poll).where(
-            and_(
-                Poll.game_id == game.id,
-                Poll.poll_type == "game"
-            )
-        ).order_by(Poll.created_at.desc())
+        select(Poll)
+        .where(and_(Poll.game_id == game.id, Poll.poll_type == "game"))
+        .order_by(Poll.created_at.desc())
     )
     poll = poll_result.scalar_one_or_none()
 
@@ -75,7 +74,7 @@ async def compute_budget_for_game(db: AsyncSession, game: GameSchedule) -> dict:
             .where(
                 and_(
                     PollVote.poll_id == poll.poll_id,
-                    PollVote.option_id == 0  # "I'm in!" option
+                    PollVote.option_id == 0,  # "I'm in!" option
                 )
             )
         )
@@ -91,7 +90,7 @@ async def compute_budget_for_game(db: AsyncSession, game: GameSchedule) -> dict:
                     "player_id": player.id,
                     "telegram_user_id": player.telegram_user_id,
                     "username": player.username,
-                    "display_name": player.display_name
+                    "display_name": player.display_name,
                 }
                 if player.id in paid_player_ids:
                     paid_players.append(player_info)
@@ -112,7 +111,7 @@ async def compute_budget_for_game(db: AsyncSession, game: GameSchedule) -> dict:
         "expected_players": game.max_players or registered_count,
         "registered_players": registered_count,
         "paid_players_list": paid_players,
-        "unpaid_players_list": unpaid_players
+        "unpaid_players_list": unpaid_players,
     }
 
 
@@ -129,18 +128,21 @@ async def compute_forecast_for_game(db: AsyncSession, game: GameSchedule) -> dic
         select(
             GameSchedule.id,
             func.count(EventPayment.id).label("payment_count"),
-            func.sum(EventPayment.amount).label("total_revenue")
+            func.sum(EventPayment.amount).label("total_revenue"),
         )
-        .outerjoin(EventPayment, and_(
-            EventPayment.game_id == GameSchedule.id,
-            EventPayment.status == "confirmed"
-        ))
+        .outerjoin(
+            EventPayment,
+            and_(
+                EventPayment.game_id == GameSchedule.id,
+                EventPayment.status == "confirmed",
+            ),
+        )
         .where(
             and_(
                 GameSchedule.game_date < datetime.utcnow(),
                 GameSchedule.game_date > historical_cutoff,
                 func.extract("dow", GameSchedule.game_date) == game_weekday,
-                GameSchedule.location == game.location
+                GameSchedule.location == game.location,
             )
         )
         .group_by(GameSchedule.id)
@@ -149,9 +151,17 @@ async def compute_forecast_for_game(db: AsyncSession, game: GameSchedule) -> dic
 
     if historical_games:
         # Calculate averages
-        avg_players = sum(g.payment_count for g in historical_games) / len(historical_games)
-        avg_revenue = sum(float(g.total_revenue or 0) for g in historical_games) / len(historical_games)
-        confidence = "high" if len(historical_games) >= 5 else "medium" if len(historical_games) >= 2 else "low"
+        avg_players = sum(g.payment_count for g in historical_games) / len(
+            historical_games
+        )
+        avg_revenue = sum(float(g.total_revenue or 0) for g in historical_games) / len(
+            historical_games
+        )
+        confidence = (
+            "high"
+            if len(historical_games) >= 5
+            else "medium" if len(historical_games) >= 2 else "low"
+        )
 
         forecasted_players = int(round(avg_players))
         forecasted_income = avg_revenue
@@ -169,8 +179,8 @@ async def compute_forecast_for_game(db: AsyncSession, game: GameSchedule) -> dic
         "metadata": {
             "historical_games_count": len(historical_games),
             "weekday": game_weekday,
-            "location": game.location
-        }
+            "location": game.location,
+        },
     }
 
 
@@ -191,12 +201,14 @@ async def run_budget_analytics_job(job_name: str = "budget_analytics"):
             next_week = today + timedelta(days=7)
 
             games_result = await db.execute(
-                select(GameSchedule).where(
+                select(GameSchedule)
+                .where(
                     and_(
                         GameSchedule.game_date >= today,
-                        GameSchedule.game_date <= next_week
+                        GameSchedule.game_date <= next_week,
                     )
-                ).order_by(GameSchedule.game_date)
+                )
+                .order_by(GameSchedule.game_date)
             )
             games = games_result.scalars().all()
 
@@ -206,7 +218,7 @@ async def run_budget_analytics_job(job_name: str = "budget_analytics"):
                     sync_session,
                     job_name=job_name,
                     status="success",
-                    payload={"games_processed": 0}
+                    payload={"games_processed": 0},
                 )
                 return
 
@@ -228,13 +240,19 @@ async def run_budget_analytics_job(job_name: str = "budget_analytics"):
 
                 if budget_cache:
                     # Update existing
-                    budget_cache.expected_income = Decimal(str(budget_data["expected_income"]))
-                    budget_cache.actual_income = Decimal(str(budget_data["actual_income"]))
+                    budget_cache.expected_income = Decimal(
+                        str(budget_data["expected_income"])
+                    )
+                    budget_cache.actual_income = Decimal(
+                        str(budget_data["actual_income"])
+                    )
                     budget_cache.number_of_payers = budget_data["number_of_payers"]
                     budget_cache.expected_players = budget_data["expected_players"]
                     budget_cache.registered_players = budget_data["registered_players"]
                     budget_cache.paid_players_list = budget_data["paid_players_list"]
-                    budget_cache.unpaid_players_list = budget_data["unpaid_players_list"]
+                    budget_cache.unpaid_players_list = budget_data[
+                        "unpaid_players_list"
+                    ]
                     budget_cache.computed_at = datetime.utcnow()
                 else:
                     # Create new
@@ -246,7 +264,7 @@ async def run_budget_analytics_job(job_name: str = "budget_analytics"):
                         expected_players=budget_data["expected_players"],
                         registered_players=budget_data["registered_players"],
                         paid_players_list=budget_data["paid_players_list"],
-                        unpaid_players_list=budget_data["unpaid_players_list"]
+                        unpaid_players_list=budget_data["unpaid_players_list"],
                     )
                     db.add(budget_cache)
 
@@ -261,8 +279,12 @@ async def run_budget_analytics_job(job_name: str = "budget_analytics"):
 
                 if forecast_cache:
                     # Update existing
-                    forecast_cache.forecasted_players = forecast_data["forecasted_players"]
-                    forecast_cache.forecasted_income = Decimal(str(forecast_data["forecasted_income"]))
+                    forecast_cache.forecasted_players = forecast_data[
+                        "forecasted_players"
+                    ]
+                    forecast_cache.forecasted_income = Decimal(
+                        str(forecast_data["forecasted_income"])
+                    )
                     forecast_cache.confidence_level = forecast_data["confidence_level"]
                     forecast_cache.method = forecast_data["method"]
                     forecast_cache.metadata = forecast_data["metadata"]
@@ -272,10 +294,12 @@ async def run_budget_analytics_job(job_name: str = "budget_analytics"):
                     forecast_cache = ForecastCache(
                         game_id=game.id,
                         forecasted_players=forecast_data["forecasted_players"],
-                        forecasted_income=Decimal(str(forecast_data["forecasted_income"])),
+                        forecasted_income=Decimal(
+                            str(forecast_data["forecasted_income"])
+                        ),
                         confidence_level=forecast_data["confidence_level"],
                         method=forecast_data["method"],
-                        metadata=forecast_data["metadata"]
+                        metadata=forecast_data["metadata"],
                     )
                     db.add(forecast_cache)
 
@@ -284,24 +308,23 @@ async def run_budget_analytics_job(job_name: str = "budget_analytics"):
             # Commit all changes
             await db.commit()
 
-            logger.info(f"Budget analytics completed. Processed {games_processed} games.")
+            logger.info(
+                f"Budget analytics completed. Processed {games_processed} games."
+            )
 
             # Record successful job run
             record_job_run(
                 sync_session,
                 job_name=job_name,
                 status="success",
-                payload={"games_processed": games_processed}
+                payload={"games_processed": games_processed},
             )
 
     except Exception as e:
         logger.error(f"Budget analytics job failed: {e}", exc_info=True)
 
         record_job_run(
-            sync_session,
-            job_name=job_name,
-            status="failed",
-            error_message=str(e)
+            sync_session, job_name=job_name, status="failed", error_message=str(e)
         )
 
         sys.exit(1)
@@ -313,7 +336,9 @@ async def run_budget_analytics_job(job_name: str = "budget_analytics"):
 
 def main():
     """Entry point"""
-    job_name = sys.argv[1] if len(sys.argv) > 1 else os.getenv("JOB_NAME", "budget_analytics")
+    job_name = (
+        sys.argv[1] if len(sys.argv) > 1 else os.getenv("JOB_NAME", "budget_analytics")
+    )
 
     logger.info(f"Starting budget analytics job: {job_name}")
     asyncio.run(run_budget_analytics_job(job_name))
