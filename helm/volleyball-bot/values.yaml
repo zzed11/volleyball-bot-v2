@@ -4,7 +4,7 @@
 # Global settings
 global:
   projectId: "atikot-org-share-project"
-  region: "us-central1"
+  region: "europe-west1"
   environment: "production"
 
 # Bot API service configuration
@@ -13,7 +13,7 @@ botApi:
   replicaCount: 2
 
   image:
-    repository: us-central1-docker.pkg.dev/atikot-org-share-project/volleyball-images/bot-api
+    repository: europe-west1-docker.pkg.dev/atikot-org-share-project/volleyball-images/bot-api
     pullPolicy: Always
     tag: "latest"
 
@@ -67,7 +67,7 @@ botApi:
   cloudSqlProxy:
     enabled: true
     image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
-    instanceConnectionName: "atikot-org-share-project:us-central1:volleyball-db"
+    instanceConnectionName: "atikot-org-share-project:europe-west1:volleyball-db"
 
   ingress:
     enabled: true
@@ -91,7 +91,7 @@ jobs:
     schedule: "0 10 * * 2"  # Every Tuesday at 10:00 AM
     timezone: "Asia/Jerusalem"
     image:
-      repository: us-central1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
+      repository: europe-west1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
       tag: "latest"
     command: ["python", "trivia_job.py", "trivia_tuesday"]
     serviceAccount:
@@ -112,7 +112,7 @@ jobs:
     schedule: "0 10 * * 3"  # Every Wednesday at 10:00 AM
     timezone: "Asia/Jerusalem"
     image:
-      repository: us-central1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
+      repository: europe-west1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
       tag: "latest"
     command: ["python", "trivia_job.py", "trivia_wednesday"]
     serviceAccount:
@@ -133,7 +133,7 @@ jobs:
     schedule: "0 9 * * 2"  # Every Tuesday at 9:00 AM
     timezone: "Asia/Jerusalem"
     image:
-      repository: us-central1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
+      repository: europe-west1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
       tag: "latest"
     command: ["python", "game_poll_job.py", "game_poll_tuesday"]
     serviceAccount:
@@ -154,7 +154,7 @@ jobs:
     schedule: "0 9 * * 3"  # Every Wednesday at 9:00 AM
     timezone: "Asia/Jerusalem"
     image:
-      repository: us-central1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
+      repository: europe-west1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
       tag: "latest"
     command: ["python", "game_poll_job.py", "game_poll_wednesday"]
     serviceAccount:
@@ -175,7 +175,7 @@ jobs:
     schedule: "0 8 * * 1"  # Every Monday at 8:00 AM
     timezone: "Asia/Jerusalem"
     image:
-      repository: us-central1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
+      repository: europe-west1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
       tag: "latest"
     command: ["python", "notification_job.py", "notification_monday"]
     serviceAccount:
@@ -196,7 +196,7 @@ jobs:
     schedule: "0 8 * * 4"  # Every Thursday at 8:00 AM
     timezone: "Asia/Jerusalem"
     image:
-      repository: us-central1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
+      repository: europe-west1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
       tag: "latest"
     command: ["python", "notification_job.py", "notification_thursday"]
     serviceAccount:
@@ -217,7 +217,7 @@ jobs:
     schedule: "0 6 * * *"  # Every day at 6:00 AM
     timezone: "Asia/Jerusalem"
     image:
-      repository: us-central1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
+      repository: europe-west1-docker.pkg.dev/atikot-org-share-project/volleyball-images/jobs
       tag: "latest"
     command: ["python", "budget_analytics_job.py", "budget_analytics"]
     serviceAccount:
@@ -246,12 +246,18 @@ jobs:
       value: "volleyball_app"
     - name: TELEGRAM_CHAT_ID
       value: "-4707740966"  # Set this to your Telegram chat ID
+    - name: VERTEX_AI_LOCATION
+      value: "europe-west1"  # Use europe-west1 for Gemini API
+    - name: VERTEX_AI_MODEL
+      value: "gemini-1.5-pro"  # Stable version available in all regions
+    - name: RAG_CORPUS_NAME
+      value: "projects/atikot-org-share-project/locations/us-west1/ragCorpora/4611686018427387904"
 
   # Cloud SQL Proxy for jobs
   cloudSqlProxy:
     enabled: true
     image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
-    instanceConnectionName: "atikot-org-share-project:us-central1:volleyball-db"
+    instanceConnectionName: "atikot-org-share-project:europe-west1:volleyball-db"
 
 # Network Policy
 networkPolicy:

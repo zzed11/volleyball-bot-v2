@@ -4,7 +4,7 @@
 
 # Variables
 PROJECT_ID ?= $(shell gcloud config get-value project)
-REGION ?= us-central1
+REGION ?= europe-west1
 IMAGE_TAG ?= latest
 
 help:

@@ -29,8 +29,11 @@ class JobConfig:
         self.db_password = None
         self.telegram_bot_token = None
         self.telegram_chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
-        self.vertex_ai_location = os.getenv("VERTEX_AI_LOCATION", "us-central1")
-        self.vertex_ai_model = os.getenv("VERTEX_AI_MODEL", "gemini-1.5-pro-002")
+        # RAG Engine supported regions: us-west1, europe-west1, europe-west2, asia-northeast1
+        self.vertex_ai_location = os.getenv("VERTEX_AI_LOCATION", "us-west1")
+        # Use gemini-1.5-pro (stable version available in all regions)
+        self.vertex_ai_model = os.getenv("VERTEX_AI_MODEL", "gemini-1.5-pro")
+        self.rag_corpus_name = os.getenv("RAG_CORPUS_NAME", "")
 
         # Load secrets
         self.load_secrets()

@@ -21,6 +21,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../bot-api"))
 from google.cloud import aiplatform
 import vertexai
 from vertexai.generative_models import GenerativeModel
+from vertexai.preview import rag
 from aiogram import Bot
 
 from db.models import Poll
@@ -30,20 +31,65 @@ logger = logging.getLogger(__name__)
 
 
 class TriviaGenerator:
-    """Generate trivia questions using Vertex AI"""
+    """Generate trivia questions using Vertex AI with RAG"""
 
     def __init__(self, config: JobConfig):
         self.config = config
         self.model_name = config.vertex_ai_model
+        self.rag_corpus_name = config.rag_corpus_name
 
         # Initialize Vertex AI
         vertexai.init(project=config.project_id, location=config.vertex_ai_location)
+
+    def retrieve_volleyball_rules_context(self, query: str, top_k: int = 5) -> str:
+        """
+        Retrieve relevant context from volleyball rules using RAG.
+
+        Args:
+            query: Query to search for relevant rules
+            top_k: Number of top results to retrieve
+
+        Returns:
+            Combined text from retrieved chunks
+        """
+        if not self.rag_corpus_name:
+            logger.warning("RAG corpus not configured, skipping context retrieval")
+            return ""
+
+        try:
+            logger.info(f"Retrieving context for query: {query}")
+
+            # Retrieve relevant chunks from RAG corpus
+            response = rag.retrieval_query(
+                rag_resources=[
+                    rag.RagResource(
+                        rag_corpus=self.rag_corpus_name,
+                    )
+                ],
+                text=query,
+                similarity_top_k=top_k,
+            )
+
+            # Combine retrieved contexts
+            contexts = []
+            for i, context in enumerate(response.contexts.contexts, 1):
+                contexts.append(f"[Context {i}]\n{context.text}")
+                logger.debug(f"Retrieved chunk {i}: {context.text[:100]}...")
+
+            combined_context = "\n\n".join(contexts)
+            logger.info(f"Retrieved {len(contexts)} relevant context chunks")
+
+            return combined_context
+
+        except Exception as e:
+            logger.error(f"Error retrieving RAG context: {e}", exc_info=True)
+            return ""
 
     def generate_trivia_questions(
         self, topic: str = "volleyball", count: int = 1
     ) -> List[Dict]:
         """
-        Generate trivia questions using Gemini.
+        Generate trivia questions using Gemini with RAG context.
 
         Args:
             topic: Topic for trivia questions
@@ -54,7 +100,45 @@ class TriviaGenerator:
         """
         model = GenerativeModel(self.model_name)
 
-        prompt = f"""Generate {count} multiple-choice trivia question(s) about {topic}.
+        # Retrieve relevant context from volleyball rules
+        context_query = f"volleyball rules about {topic}"
+        retrieved_context = self.retrieve_volleyball_rules_context(
+            query=context_query, top_k=5
+        )
+
+        # Build prompt with retrieved context
+        if retrieved_context:
+            prompt = f"""You are creating trivia questions based on the official FIVB volleyball rules.
+
+RELEVANT RULES CONTEXT:
+{retrieved_context}
+
+TASK:
+Generate {count} multiple-choice trivia question(s) about {topic} using the rules context above.
+
+Requirements:
+- Base questions on the actual rules provided in the context
+- Each question should be interesting and challenging
+- Questions should test knowledge of specific volleyball rules
+- Provide 4 answer options
+- Indicate which option is correct (0-3)
+- Questions should be appropriate for a volleyball community
+
+Format your response as JSON:
+[
+  {{
+    "question": "Question text here?",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correct_answer": 0
+  }}
+]
+
+Only return the JSON array, no additional text.
+"""
+        else:
+            # Fallback to generic prompt if RAG is not configured
+            logger.warning("No RAG context retrieved, using generic prompt")
+            prompt = f"""Generate {count} multiple-choice trivia question(s) about {topic}.
 
 Requirements:
 - Each question should be interesting and challenging

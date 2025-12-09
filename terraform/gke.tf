@@ -6,6 +6,9 @@ resource "google_container_cluster" "primary" {
   # Autopilot mode
   enable_autopilot = true
 
+  # Allow deletion (set to true for production)
+  deletion_protection = false
+
   network    = google_compute_network.vpc.name
   subnetwork = google_compute_subnetwork.subnet.name
 

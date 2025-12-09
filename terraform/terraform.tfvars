@@ -2,8 +2,8 @@
 # Copy this to terraform.tfvars and fill in your values
 
 project_id              = "atikot-org-share-project"
-region                  = "us-central1"
-zone                    = "us-central1-a"
+region                  = "europe-west1"
+zone                    = "europe-west1-b"
 environment             = "production"
 gke_cluster_name        = "volleyball-cluster"
 cloudsql_instance_name  = "volleyball-db"

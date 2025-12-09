@@ -94,3 +94,18 @@ output "database_connection_string" {
   value       = "postgresql://${google_sql_user.app_user.name}:PASSWORD@${google_sql_database_instance.postgres.private_ip_address}:5432/${google_sql_database.database.name}"
   sensitive   = true
 }
+
+output "storage_bucket_name" {
+  description = "Cloud Storage bucket name for volleyball data"
+  value       = google_storage_bucket.volleyball_data.name
+}
+
+output "storage_bucket_url" {
+  description = "Cloud Storage bucket URL"
+  value       = "gs://${google_storage_bucket.volleyball_data.name}"
+}
+
+output "volleyball_rules_pdf_path" {
+  description = "Path to volleyball rules PDF in Cloud Storage"
+  value       = "gs://${google_storage_bucket.volleyball_data.name}/${google_storage_bucket_object.volleyball_rules.name}"
+}
