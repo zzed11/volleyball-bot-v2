@@ -57,8 +57,12 @@ export function FIFAPlayerCard({ player, onClick, variant = 'gold' }: FIFAPlayer
           <div className="flex-1 flex justify-center items-center">
             <div className="relative w-32 h-32 mt-4">
               <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent rounded-full" />
-              <div className="flex h-full w-full items-center justify-center rounded-full bg-white/10 backdrop-blur-sm border-2 border-white/30">
-                <User className="h-16 w-16 text-white drop-shadow-lg" />
+              <div className="flex h-full w-full items-center justify-center rounded-full bg-white/10 backdrop-blur-sm border-2 border-white/30 overflow-hidden">
+                {player.photo_url ? (
+                  <img src={player.photo_url} alt={player.full_name} className="h-full w-full object-cover" />
+                ) : (
+                  <User className="h-16 w-16 text-white drop-shadow-lg" />
+                )}
               </div>
             </div>
           </div>

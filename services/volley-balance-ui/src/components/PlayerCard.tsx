@@ -42,13 +42,17 @@ export function PlayerCard({ player, onEdit, onDelete, onClick, compact = false,
 
   if (compact) {
     return (
-      <div 
+      <div
         className="flex items-center justify-between rounded-lg border border-border bg-card p-3 transition-colors hover:bg-muted/50"
         onClick={onClick}
       >
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-            <User className="h-4 w-4 text-primary" />
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 overflow-hidden">
+            {player.photo_url ? (
+              <img src={player.photo_url} alt={player.full_name} className="h-full w-full object-cover" />
+            ) : (
+              <User className="h-4 w-4 text-primary" />
+            )}
           </div>
           <div>
             <p className="font-medium text-sm">{player.full_name}</p>
@@ -80,8 +84,12 @@ export function PlayerCard({ player, onEdit, onDelete, onClick, compact = false,
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-              <User className="h-6 w-6 text-primary" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 overflow-hidden">
+              {player.photo_url ? (
+                <img src={player.photo_url} alt={player.full_name} className="h-full w-full object-cover" />
+              ) : (
+                <User className="h-6 w-6 text-primary" />
+              )}
             </div>
             <div>
               <h3 className="font-semibold text-foreground">{player.full_name}</h3>

@@ -113,6 +113,7 @@ export function PlayerForm({ player, onSubmit, onCancel, isLoading }: PlayerForm
       height_cm: player?.height_cm || null,
       preferred_side: player?.preferred_side || 'no_preference',
       notes: player?.notes || null,
+      photo_url: player?.photo_url || '',
     },
   });
 
@@ -145,6 +146,26 @@ export function PlayerForm({ player, onSubmit, onCancel, isLoading }: PlayerForm
               <FormControl>
                 <Input placeholder="Enter player name" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="photo_url"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Photo URL</FormLabel>
+              <FormControl>
+                <Input
+                  placeholder="https://example.com/photo.jpg"
+                  {...field}
+                  value={field.value ?? ''}
+                  onChange={(e) => field.onChange(e.target.value || null)}
+                />
+              </FormControl>
+              <p className="text-xs text-muted-foreground">Optional: Enter a direct link to player's photo</p>
               <FormMessage />
             </FormItem>
           )}

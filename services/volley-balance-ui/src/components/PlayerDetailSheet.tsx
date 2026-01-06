@@ -61,8 +61,12 @@ export function PlayerDetailSheet({ player, open, onClose, onEdit, onDelete }: P
         <div className="mt-6 space-y-6">
           {/* Header */}
           <div className="flex items-center gap-4">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10">
-              <User className="h-10 w-10 text-primary" />
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 overflow-hidden">
+              {player.photo_url ? (
+                <img src={player.photo_url} alt={player.full_name} className="h-full w-full object-cover" />
+              ) : (
+                <User className="h-10 w-10 text-primary" />
+              )}
             </div>
             <div>
               <h2 className="text-xl font-bold font-display">{player.full_name}</h2>
