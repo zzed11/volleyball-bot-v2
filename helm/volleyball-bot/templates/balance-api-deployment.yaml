@@ -1,0 +1,95 @@
+{{- if .Values.balanceApi.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "volleyball-bot.fullname" . }}-balance-api
+  labels:
+    {{- include "volleyball-bot.labels" . | nindent 4 }}
+    app.kubernetes.io/component: balance-api
+spec:
+  {{- if not .Values.balanceApi.autoscaling.enabled }}
+  replicas: {{ .Values.balanceApi.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "volleyball-bot.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: balance-api
+  template:
+    metadata:
+      labels:
+        {{- include "volleyball-bot.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: balance-api
+      annotations:
+        projectId: {{ .Values.global.projectId }}
+    spec:
+      serviceAccountName: {{ .Values.balanceApi.serviceAccount.name }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: balance-api
+        image: "{{ .Values.balanceApi.image.repository }}:{{ .Values.balanceApi.image.tag }}"
+        imagePullPolicy: {{ .Values.balanceApi.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.balanceApi.service.targetPort }}
+          protocol: TCP
+        env:
+        {{- range .Values.balanceApi.env }}
+        - name: {{ .name }}
+          {{- if .value }}
+          value: {{ .value | quote }}
+          {{- else if .valueFrom }}
+          valueFrom:
+            {{- toYaml .valueFrom | nindent 12 }}
+          {{- end }}
+        {{- end }}
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          {{- toYaml .Values.balanceApi.resources | nindent 10 }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: false
+
+      {{- if .Values.balanceApi.cloudSqlProxy.enabled }}
+      - name: cloud-sql-proxy
+        image: {{ .Values.balanceApi.cloudSqlProxy.image }}
+        args:
+        - "--structured-logs"
+        - "--port=5432"
+        - "--private-ip"
+        - "{{ .Values.balanceApi.cloudSqlProxy.instanceConnectionName }}"
+        securityContext:
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 200m
+            memory: 256Mi
+      {{- end }}
+{{- end }}

@@ -83,6 +83,107 @@ botApi:
             pathType: Prefix
     tls: []
 
+# Volley Balance API service configuration
+balanceApi:
+  enabled: true
+  replicaCount: 2
+
+  image:
+    repository: europe-west1-docker.pkg.dev/atikot-org-share-project/volleyball-images/volley-balance-api
+    pullPolicy: Always
+    tag: "latest"
+
+  serviceAccount:
+    create: true
+    annotations:
+      iam.gke.io/gcp-service-account: "balance-api-sa@atikot-org-share-project.iam.gserviceaccount.com"
+    name: "balance-api"
+
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8081
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 80
+
+  env:
+    - name: NODE_ENV
+      value: "production"
+    - name: GCP_PROJECT_ID
+      value: "atikot-org-share-project"
+    - name: DB_HOST
+      value: "127.0.0.1"
+    - name: DB_PORT
+      value: "5432"
+    - name: DB_NAME
+      value: "volleyball"
+    - name: DB_USER
+      value: "volleyball_app"
+    - name: PORT
+      value: "8081"
+    - name: CORS_ORIGIN
+      value: "https://builder.volleyball-party.party"
+    - name: GOOGLE_CALLBACK_URL
+      value: "https://builder.volleyball-party.party/auth/google/callback"
+
+  # Cloud SQL Proxy sidecar
+  cloudSqlProxy:
+    enabled: true
+    image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
+    instanceConnectionName: "atikot-org-share-project:europe-west1:volleyball-db"
+
+# Volley Balance UI service configuration
+balanceUi:
+  enabled: true
+  replicaCount: 2
+
+  image:
+    repository: europe-west1-docker.pkg.dev/atikot-org-share-project/volleyball-images/volley-balance-ui
+    pullPolicy: Always
+    tag: "latest"
+
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8080
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+  autoscaling:
+    enabled: false  # Static files don't need autoscaling
+
+  ingress:
+    enabled: true
+    className: "gce"
+    managedCertificate: true  # Enable Google-managed SSL certificate
+    httpsRedirect: false  # Disabled temporarily for certificate validation
+    annotations:
+      kubernetes.io/ingress.class: "gce"
+    hosts:
+      - host: builder.volleyball-party.party
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
 # CronJob configurations
 jobs:
   # Trivia Tuesday

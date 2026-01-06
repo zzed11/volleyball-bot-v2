@@ -1,0 +1,55 @@
+{{- if and .Values.balanceUi.enabled .Values.balanceUi.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "volleyball-bot.fullname" . }}-balance
+  labels:
+    {{- include "volleyball-bot.labels" . | nindent 4 }}
+    app.kubernetes.io/component: balance
+  annotations:
+    {{- with .Values.balanceUi.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+    {{- if .Values.balanceUi.ingress.managedCertificate }}
+    networking.gke.io/managed-certificates: {{ include "volleyball-bot.fullname" . }}-balance-cert
+    {{- end }}
+    {{- if .Values.balanceUi.ingress.httpsRedirect }}
+    networking.gke.io/v1beta1.FrontendConfig: {{ include "volleyball-bot.fullname" . }}-balance-frontend
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.balanceUi.ingress.className }}
+  {{- if .Values.balanceUi.ingress.tls }}
+  tls:
+    {{- range .Values.balanceUi.ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .Values.balanceUi.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          # API routes go to balance-api service
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "volleyball-bot.fullname" $ }}-balance-api
+                port:
+                  number: 80
+          # All other routes go to balance-ui service (SPA)
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "volleyball-bot.fullname" $ }}-balance-ui
+                port:
+                  number: 80
+          {{- end }}
+    {{- end }}
+{{- end }}

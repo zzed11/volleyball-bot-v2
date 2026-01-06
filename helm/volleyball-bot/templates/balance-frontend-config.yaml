@@ -1,0 +1,13 @@
+{{- if and .Values.balanceUi.enabled .Values.balanceUi.ingress.enabled .Values.balanceUi.ingress.httpsRedirect -}}
+apiVersion: networking.gke.io/v1beta1
+kind: FrontendConfig
+metadata:
+  name: {{ include "volleyball-bot.fullname" . }}-balance-frontend
+  labels:
+    {{- include "volleyball-bot.labels" . | nindent 4 }}
+    app.kubernetes.io/component: balance
+spec:
+  redirectToHttps:
+    enabled: true
+    responseCodeName: "MOVED_PERMANENTLY_DEFAULT"
+{{- end }}

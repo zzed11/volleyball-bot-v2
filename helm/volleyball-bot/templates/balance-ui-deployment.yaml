@@ -1,0 +1,67 @@
+{{- if .Values.balanceUi.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "volleyball-bot.fullname" . }}-balance-ui
+  labels:
+    {{- include "volleyball-bot.labels" . | nindent 4 }}
+    app.kubernetes.io/component: balance-ui
+spec:
+  replicas: {{ .Values.balanceUi.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "volleyball-bot.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: balance-ui
+  template:
+    metadata:
+      labels:
+        {{- include "volleyball-bot.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: balance-ui
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      volumes:
+      - name: nginx-cache
+        emptyDir: {}
+      - name: nginx-run
+        emptyDir: {}
+      containers:
+      - name: balance-ui
+        image: "{{ .Values.balanceUi.image.repository }}:{{ .Values.balanceUi.image.tag }}"
+        imagePullPolicy: {{ .Values.balanceUi.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.balanceUi.service.targetPort }}
+          protocol: TCP
+        volumeMounts:
+        - name: nginx-cache
+          mountPath: /var/cache/nginx
+        - name: nginx-run
+          mountPath: /var/run
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        resources:
+          {{- toYaml .Values.balanceUi.resources | nindent 10 }}
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+{{- end }}

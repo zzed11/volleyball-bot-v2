@@ -1,0 +1,14 @@
+{{- if and .Values.balanceUi.enabled .Values.balanceUi.ingress.enabled .Values.balanceUi.ingress.managedCertificate -}}
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: {{ include "volleyball-bot.fullname" . }}-balance-cert
+  labels:
+    {{- include "volleyball-bot.labels" . | nindent 4 }}
+    app.kubernetes.io/component: balance
+spec:
+  domains:
+    {{- range .Values.balanceUi.ingress.hosts }}
+    - {{ .host }}
+    {{- end }}
+{{- end }}

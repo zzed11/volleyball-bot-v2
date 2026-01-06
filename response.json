@@ -1,0 +1,1 @@
+{"statusCode": 200, "body": "{\"message\": \"Successfully collected and stored FortiGate CNF credits information\", \"item\": {\"id\": \"2025-12-10\", \"credits_balance\": 1929130, \"last_credit_load\": 2000000, \"last_credit_load_on\": \"2025-10-21T12:23:36.628493-07:00\", \"fetched_at\": \"2025-12-10T12:14:42.258112\"}}"}

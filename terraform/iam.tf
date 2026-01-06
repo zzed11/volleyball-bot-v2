@@ -84,11 +84,37 @@ resource "google_secret_manager_secret_iam_member" "notification_job_secret_acce
   member    = "serviceAccount:${google_service_account.notification_job.email}"
 }
 
+# Service Account for volley-balance-api
+resource "google_service_account" "balance_api" {
+  account_id   = "balance-api-sa"
+  display_name = "Volley Balance API Service Account"
+  description  = "Service account for volley-balance-api workloads"
+}
+
+# IAM bindings for balance-api
+resource "google_project_iam_member" "balance_api_cloudsql_client" {
+  project = var.project_id
+  role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${google_service_account.balance_api.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "balance_api_secret_accessor" {
+  secret_id = google_secret_manager_secret.db_password.secret_id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.balance_api.email}"
+}
+
 # Workload Identity bindings
 resource "google_service_account_iam_member" "bot_api_workload_identity" {
   service_account_id = google_service_account.bot_api.name
   role               = "roles/iam.workloadIdentityUser"
   member             = "serviceAccount:${var.project_id}.svc.id.goog[default/bot-api]"
+}
+
+resource "google_service_account_iam_member" "balance_api_workload_identity" {
+  service_account_id = google_service_account.balance_api.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[default/balance-api]"
 }
 
 resource "google_service_account_iam_member" "trivia_job_workload_identity" {
