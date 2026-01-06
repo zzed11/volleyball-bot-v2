@@ -7,6 +7,7 @@ import passport from 'passport';
 import connectPgSimple from 'connect-pg-simple';
 import playersRouter from './routes/players';
 import authRouter from './routes/auth';
+import uploadRouter from './routes/upload';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { getDbPool, initDbPool, closeDbPool } from './config/database';
 import { configureAuth } from './config/auth';
@@ -112,6 +113,7 @@ async function createApp(): Promise<express.Application> {
   // API routes
   app.use('/auth', authRouter);
   app.use('/api/players', requireActiveUser, playersRouter);
+  app.use('/api/upload', requireActiveUser, uploadRouter);
 
   // 404 handler
   app.use(notFoundHandler);

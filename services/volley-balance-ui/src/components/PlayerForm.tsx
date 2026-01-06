@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useState, useRef } from 'react';
 import {
   Select,
   SelectContent,
@@ -95,6 +96,11 @@ function RatingField({ form, name, label, description }: RatingFieldProps) {
 }
 
 export function PlayerForm({ player, onSubmit, onCancel, isLoading }: PlayerFormProps) {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(player?.photo_url || null);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const form = useForm<PlayerFormData>({
     resolver: zodResolver(playerSchema),
     defaultValues: {
@@ -133,9 +139,78 @@ export function PlayerForm({ player, onSubmit, onCancel, isLoading }: PlayerForm
 
   const positions: PlayerPosition[] = ['setter', 'outside_hitter', 'middle_blocker', 'opposite', 'libero', 'universal'];
 
+  // Handle file selection
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Upload photo to server
+  const uploadPhoto = async (): Promise<string | null> => {
+    if (!selectedFile) return null;
+
+    setUploadingPhoto(true);
+    try {
+      const formData = new FormData();
+      formData.append('photo', selectedFile);
+      if (player?.id) {
+        formData.append('playerId', player.id.toString());
+      }
+
+      const response = await fetch('/api/upload/player-photo', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload photo');
+      }
+
+      const data = await response.json();
+      return data.photo_url;
+    } catch (error) {
+      console.error('Photo upload error:', error);
+      throw error;
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  // Handle form submission
+  const handleFormSubmit = async (data: PlayerFormData) => {
+    try {
+      // Upload photo first if a file is selected
+      if (selectedFile) {
+        const photoUrl = await uploadPhoto();
+        if (photoUrl) {
+          data.photo_url = photoUrl;
+        }
+      }
+
+      // Submit player data
+      onSubmit(data);
+    } catch (error) {
+      console.error('Form submission error:', error);
+      // Still try to submit without photo if upload fails
+      form.setError('photo_url', {
+        message: 'Photo upload failed. Player saved without photo.',
+      });
+      onSubmit(data);
+    }
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
         {/* Basic Info */}
         <FormField
           control={form.control}
@@ -151,21 +226,58 @@ export function PlayerForm({ player, onSubmit, onCancel, isLoading }: PlayerForm
           )}
         />
 
+        {/* Photo Upload */}
+        <div className="space-y-2">
+          <Label>Player Photo</Label>
+          <div className="flex items-center gap-4">
+            {photoPreview && (
+              <div className="flex h-24 w-24 items-center justify-center rounded-xl overflow-hidden bg-muted">
+                <img src={photoPreview} alt="Preview" className="h-full w-full object-cover" />
+              </div>
+            )}
+            <div className="flex-1">
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                accept="image/*"
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {photoPreview ? 'Change Photo' : 'Upload Photo'}
+              </Button>
+              <p className="text-xs text-muted-foreground mt-2">
+                Optional: Upload a photo (max 5MB)
+              </p>
+            </div>
+          </div>
+        </div>
+
         <FormField
           control={form.control}
           name="photo_url"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Photo URL</FormLabel>
+              <FormLabel>Or paste photo URL</FormLabel>
               <FormControl>
                 <Input
                   placeholder="https://example.com/photo.jpg"
                   {...field}
                   value={field.value ?? ''}
-                  onChange={(e) => field.onChange(e.target.value || null)}
+                  onChange={(e) => {
+                    field.onChange(e.target.value || null);
+                    if (e.target.value) {
+                      setPhotoPreview(e.target.value);
+                      setSelectedFile(null);
+                    }
+                  }}
                 />
               </FormControl>
-              <p className="text-xs text-muted-foreground">Optional: Enter a direct link to player's photo</p>
+              <p className="text-xs text-muted-foreground">Alternative: Paste a direct link to player's photo</p>
               <FormMessage />
             </FormItem>
           )}
@@ -415,11 +527,11 @@ export function PlayerForm({ player, onSubmit, onCancel, isLoading }: PlayerForm
         </div>
 
         <div className="flex justify-end gap-3 pt-4">
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={isLoading || uploadingPhoto}>
             Cancel
           </Button>
-          <Button type="submit" disabled={isLoading}>
-            {isLoading ? 'Saving...' : player ? 'Update Player' : 'Add Player'}
+          <Button type="submit" disabled={isLoading || uploadingPhoto}>
+            {uploadingPhoto ? 'Uploading Photo...' : isLoading ? 'Saving...' : player ? 'Update Player' : 'Add Player'}
           </Button>
         </div>
       </form>
