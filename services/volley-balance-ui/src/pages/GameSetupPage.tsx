@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { usePlayers } from '@/hooks/usePlayers';
@@ -9,14 +9,29 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Users, Volleyball, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Users, Volleyball, AlertCircle, Loader2, CheckCircle2, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 export default function GameSetupPage() {
   const { data: players, isLoading, error } = usePlayers();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [searchTerm, setSearchTerm] = useState('');
+  const [keepAVTogether, setKeepAVTogether] = useState(false);
   const navigate = useNavigate();
+
+  // Filter players by search term (case-insensitive)
+  const filteredPlayers = useMemo(() => {
+    if (!players) return [];
+    if (!searchTerm.trim()) return players;
+
+    const lowerSearch = searchTerm.toLowerCase();
+    return players.filter(p =>
+      p.full_name.toLowerCase().includes(lowerSearch)
+    );
+  }, [players, searchTerm]);
 
   const togglePlayer = (playerId: string) => {
     setSelectedIds((prev) => {
@@ -31,8 +46,13 @@ export default function GameSetupPage() {
   };
 
   const selectAll = () => {
-    if (players) {
-      setSelectedIds(new Set(players.map((p) => p.id)));
+    // Select all FILTERED players
+    if (filteredPlayers) {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        filteredPlayers.forEach((p) => next.add(p.id.toString()));
+        return next;
+      });
     }
   };
 
@@ -46,10 +66,13 @@ export default function GameSetupPage() {
       return;
     }
 
-    const selectedPlayers = players?.filter((p) => selectedIds.has(p.id)) || [];
-    
+    const selectedPlayers = players?.filter((p) => selectedIds.has(p.id.toString())) || [];
+
     try {
-      const result = generateThreeTeams(selectedPlayers);
+      // Pass A&V option to team generator
+      const result = generateThreeTeams(selectedPlayers, {
+        keepAVTogether,
+      });
       // Store result in sessionStorage for teams page
       sessionStorage.setItem('generatedTeams', JSON.stringify(result));
       navigate('/teams');
@@ -100,50 +123,69 @@ export default function GameSetupPage() {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
+                {/* Search Input */}
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Search players by name..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+
+                {/* Player Grid */}
                 <div className="grid gap-2 sm:grid-cols-2">
-                  {players.map((player) => {
-                    const isSelected = selectedIds.has(player.id);
-                    return (
-                      <label
-                        key={player.id}
-                        className={cn(
-                          "flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-all",
-                          isSelected
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/50 hover:bg-muted/50"
-                        )}
-                      >
-                        <Checkbox
-                          checked={isSelected}
-                          onCheckedChange={() => togglePlayer(player.id)}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm truncate">{player.full_name}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <Badge 
-                              variant={player.best_position as any} 
-                              className="text-[10px] px-1.5 py-0"
-                            >
-                              {POSITION_SHORT_LABELS[player.best_position]}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {player.overall_rating}
-                            </span>
-                            <Badge 
-                              variant={player.gender === 'female' ? 'female' : 'male'} 
-                              className="text-[10px] px-1 py-0"
-                            >
-                              {player.gender === 'female' ? '♀' : '♂'}
-                            </Badge>
+                  {filteredPlayers.length > 0 ? (
+                    filteredPlayers.map((player) => {
+                      const isSelected = selectedIds.has(player.id.toString());
+                      return (
+                        <label
+                          key={player.id}
+                          className={cn(
+                            "flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-all",
+                            isSelected
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50 hover:bg-muted/50"
+                          )}
+                        >
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() => togglePlayer(player.id.toString())}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{player.full_name}</p>
+                            <div className="flex items-center gap-2 mt-0.5">
+                              <Badge
+                                variant={player.best_position as any}
+                                className="text-[10px] px-1.5 py-0"
+                              >
+                                {POSITION_SHORT_LABELS[player.best_position]}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {player.overall_rating}
+                              </span>
+                              <Badge
+                                variant={player.gender === 'female' ? 'female' : 'male'}
+                                className="text-[10px] px-1 py-0"
+                              >
+                                {player.gender === 'female' ? '♀' : '♂'}
+                              </Badge>
+                            </div>
                           </div>
-                        </div>
-                        {isSelected && (
-                          <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
-                        )}
-                      </label>
-                    );
-                  })}
+                          {isSelected && (
+                            <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0" />
+                          )}
+                        </label>
+                      );
+                    })
+                  ) : (
+                    <div className="col-span-2 text-center py-8 text-muted-foreground">
+                      No players found matching "{searchTerm}"
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -189,6 +231,21 @@ export default function GameSetupPage() {
                       </AlertDescription>
                     </Alert>
                   )}
+
+                  {/* A&V Toggle */}
+                  <div className="flex items-center space-x-2 pt-2 border-t">
+                    <Checkbox
+                      id="keep-av-together"
+                      checked={keepAVTogether}
+                      onCheckedChange={(checked) => setKeepAVTogether(checked as boolean)}
+                    />
+                    <Label
+                      htmlFor="keep-av-together"
+                      className="text-sm font-normal cursor-pointer"
+                    >
+                      A&V
+                    </Label>
+                  </div>
 
                   <Button
                     className="w-full gap-2"

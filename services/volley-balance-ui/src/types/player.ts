@@ -53,6 +53,10 @@ export interface TeamGenerationResult {
   balanceMessage: string;
 }
 
+export interface TeamGenerationOptions {
+  keepAVTogether?: boolean; // Forces Вова and Алина on the same team
+}
+
 export const POSITION_LABELS: Record<PlayerPosition, string> = {
   setter: 'Setter',
   outside_hitter: 'Outside Hitter',
