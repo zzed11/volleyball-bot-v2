@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: load-2025-transactions
+  namespace: default
+spec:
+  template:
+    metadata:
+      labels:
+        app: load-2025-transactions
+    spec:
+      serviceAccountName: bot-api
+      restartPolicy: Never
+      containers:
+      - name: psql-client
+        image: postgres:15
+        command:
+        - /bin/bash
+        - -c
+        - |
+          echo "Waiting for Cloud SQL Proxy..."
+          sleep 5
+          echo "Connecting to database..."
+          PGPASSWORD="${DB_PASSWORD}" psql -h 127.0.0.1 -p 5432 -U volleyball_app -d volleyball -f /sql/load_2025_actual_data.sql
+          echo "SQL execution completed"
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-password
+              key: password
+        volumeMounts:
+        - name: sql-script
+          mountPath: /sql
+      - name: cloud-sql-proxy
+        image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
+        args:
+        - "--private-ip"
+        - "atikot-org-share-project:europe-west1:volleyball-db"
+        securityContext:
+          runAsNonRoot: true
+      volumes:
+      - name: sql-script
+        configMap:
+          name: load-2025-transactions-sql

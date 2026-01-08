@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: query-categories
+  namespace: default
+spec:
+  template:
+    metadata:
+      labels:
+        app: query-categories
+    spec:
+      serviceAccountName: bot-api
+      restartPolicy: Never
+      containers:
+      - name: psql-client
+        image: postgres:15
+        command:
+        - /bin/bash
+        - -c
+        - |
+          echo "Waiting for Cloud SQL Proxy..."
+          sleep 5
+          echo "Querying expense categories..."
+          PGPASSWORD="${DB_PASSWORD}" psql -h 127.0.0.1 -p 5432 -U volleyball_app -d volleyball -c "SELECT * FROM expense_categories ORDER BY id;"
+          echo ""
+          echo "Checking category count..."
+          PGPASSWORD="${DB_PASSWORD}" psql -h 127.0.0.1 -p 5432 -U volleyball_app -d volleyball -c "SELECT COUNT(*) FROM expense_categories;"
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-password
+              key: password
+      - name: cloud-sql-proxy
+        image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
+        args:
+        - "--private-ip"
+        - "atikot-org-share-project:europe-west1:volleyball-db"
+        securityContext:
+          runAsNonRoot: true

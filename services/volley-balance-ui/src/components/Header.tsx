@@ -1,11 +1,16 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Users, Volleyball, ListChecks } from 'lucide-react';
+import { Users, Volleyball, ListChecks, Calendar, TrendingUp, BarChart3, Wallet, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { path: '/', label: 'Players', icon: Users },
   { path: '/game-setup', label: 'Game Setup', icon: ListChecks },
   { path: '/teams', label: 'Teams', icon: Volleyball },
+  { path: '/game-history', label: 'Game History', icon: Calendar },
+  { path: '/transactions', label: 'Transactions', icon: DollarSign },
+  { path: '/cash-flow', label: 'Cash Flow', icon: TrendingUp },
+  { path: '/budget', label: 'Budget', icon: Wallet },
+  { path: '/profit-loss', label: 'P&L', icon: BarChart3 },
 ];
 
 export function Header() {

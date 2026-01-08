@@ -8,6 +8,8 @@ import connectPgSimple from 'connect-pg-simple';
 import playersRouter from './routes/players';
 import authRouter from './routes/auth';
 import uploadRouter from './routes/upload';
+import financialRouter from './routes/financial';
+import gamesRouter from './routes/games';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { getDbPool, initDbPool, closeDbPool } from './config/database';
 import { configureAuth } from './config/auth';
@@ -114,6 +116,8 @@ async function createApp(): Promise<express.Application> {
   app.use('/auth', authRouter);
   app.use('/api/players', requireActiveUser, playersRouter);
   app.use('/api/upload', requireActiveUser, uploadRouter);
+  app.use('/api/financial', requireActiveUser, financialRouter);
+  app.use('/api/games', requireActiveUser, gamesRouter);
 
   // 404 handler
   app.use(notFoundHandler);

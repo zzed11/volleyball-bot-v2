@@ -41,12 +41,10 @@ export async function uploadPlayerPhoto(file: Express.Multer.File, playerId?: nu
     });
 
     blobStream.on('finish', () => {
-      // Make the file publicly accessible
-      blob.makePublic().then(() => {
-        // Return the public URL
-        const publicUrl = `https://storage.googleapis.com/${bucketName}/${filename}`;
-        resolve(publicUrl);
-      }).catch(reject);
+      // Return the public URL
+      // Bucket is configured with public read access at bucket level
+      const publicUrl = `https://storage.googleapis.com/${bucketName}/${filename}`;
+      resolve(publicUrl);
     });
 
     blobStream.end(file.buffer);

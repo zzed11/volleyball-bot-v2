@@ -6,12 +6,25 @@ import { TeamGenerationResult } from '@/types/player';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Volleyball, RefreshCw, ListChecks, TrendingUp, Users, CheckCircle2, AlertCircle, Info } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Volleyball, RefreshCw, ListChecks, TrendingUp, Users, CheckCircle2, AlertCircle, Info, Save, Calendar, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { gamesApi } from '@/api/gamesApiClient';
+import { CreateGameWithTeamsDto } from '@/types/game';
+import { toast } from 'sonner';
 
 export default function TeamsPage() {
   const [result, setResult] = useState<TeamGenerationResult | null>(null);
   const navigate = useNavigate();
+
+  // Save & Schedule state
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveAsTemplate, setSaveAsTemplate] = useState(false);
+  const [templateName, setTemplateName] = useState('');
+  const [location, setLocation] = useState('Sport Complex');
+  const [nextFridayDate, setNextFridayDate] = useState<string>('');
 
   useEffect(() => {
     const stored = sessionStorage.getItem('generatedTeams');
@@ -24,9 +37,75 @@ export default function TeamsPage() {
     }
   }, []);
 
+  // Calculate next Friday preview
+  useEffect(() => {
+    const getNextFriday = () => {
+      const today = new Date();
+      const dayOfWeek = today.getDay();
+      const daysUntilFriday = (5 - dayOfWeek + 7) % 7 || 7;
+      const nextFriday = new Date(today);
+      nextFriday.setDate(today.getDate() + daysUntilFriday);
+      return nextFriday.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+
+    setNextFridayDate(getNextFriday());
+  }, []);
+
   const handleNewGame = () => {
     sessionStorage.removeItem('generatedTeams');
     navigate('/game-setup');
+  };
+
+  const handleSaveAndProceed = async () => {
+    if (!result) return;
+
+    if (saveAsTemplate && !templateName.trim()) {
+      toast.error('Please enter a template name');
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const dto: CreateGameWithTeamsDto = {
+        location,
+        description: `3-team game - ${result.balanceQuality} balance`,
+        price_per_player: 50,
+        max_players: 18,
+        use_next_friday: true,
+        teams: result.teams.map((team, idx) => ({
+          team_number: idx + 1,
+          team_name: team.name,
+          player_ids: team.players.map(p => p.id),
+          average_rating: team.averageRating,
+          female_count: team.femaleCount,
+        })),
+        save_as_template: saveAsTemplate,
+        template_name: saveAsTemplate ? templateName : undefined,
+      };
+
+      const createdGame = await gamesApi.createGameWithTeams(dto);
+
+      toast.success(
+        `Game scheduled for ${new Date(createdGame.game_date).toLocaleDateString()}!`,
+        { description: saveAsTemplate ? 'Teams saved as template' : undefined }
+      );
+
+      // Clear session storage and navigate to game history
+      sessionStorage.removeItem('generatedTeams');
+      navigate('/game-history');
+
+    } catch (error: any) {
+      console.error('Failed to save game:', error);
+      toast.error(error.message || 'Failed to schedule game');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const qualityConfig = {
@@ -203,6 +282,94 @@ export default function TeamsPage() {
                   </tr>
                 </tbody>
               </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Save & Schedule Game Card */}
+        <Card className="mt-8 border-2 border-primary/20">
+          <CardHeader>
+            <CardTitle className="text-xl font-display flex items-center gap-2">
+              <Save className="h-5 w-5" />
+              Save & Schedule Game
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Next Friday Preview */}
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-primary/5 border border-primary/20">
+              <Calendar className="h-8 w-8 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground">Game will be scheduled for</p>
+                <p className="text-lg font-semibold text-foreground">{nextFridayDate}</p>
+              </div>
+            </div>
+
+            {/* Location Input */}
+            <div className="space-y-2">
+              <Label htmlFor="location">Location</Label>
+              <Input
+                id="location"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="e.g., Sport Complex Hall A"
+              />
+            </div>
+
+            {/* Save as Template Option */}
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="save-template"
+                  checked={saveAsTemplate}
+                  onCheckedChange={(checked) => setSaveAsTemplate(checked as boolean)}
+                />
+                <Label
+                  htmlFor="save-template"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Save teams as reusable template
+                </Label>
+              </div>
+
+              {saveAsTemplate && (
+                <Input
+                  placeholder="Template name (e.g., Balanced Mix Jan 2025)"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                />
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <Button
+                onClick={handleSaveAndProceed}
+                disabled={isSaving || !location.trim()}
+                className="flex-1 gap-2"
+                size="lg"
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Scheduling...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-5 w-5" />
+                    Save & Schedule Game
+                  </>
+                )}
+              </Button>
+
+              <Button
+                onClick={handleNewGame}
+                variant="outline"
+                disabled={isSaving}
+                size="lg"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Regenerate
+              </Button>
             </div>
           </CardContent>
         </Card>

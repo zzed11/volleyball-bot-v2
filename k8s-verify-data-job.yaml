@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: verify-2025-data
+  namespace: default
+spec:
+  template:
+    metadata:
+      labels:
+        app: verify-2025-data
+    spec:
+      serviceAccountName: bot-api
+      restartPolicy: Never
+      containers:
+      - name: psql-client
+        image: postgres:15
+        command:
+        - /bin/bash
+        - -c
+        - |
+          echo "Waiting for Cloud SQL Proxy..."
+          sleep 5
+          echo "Verifying 2025 transaction data..."
+          PGPASSWORD="${DB_PASSWORD}" psql -h 127.0.0.1 -p 5432 -U volleyball_app -d volleyball -f /sql/verify_2025_data.sql
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-password
+              key: password
+        volumeMounts:
+        - name: sql-script
+          mountPath: /sql
+      - name: cloud-sql-proxy
+        image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
+        args:
+        - "--private-ip"
+        - "atikot-org-share-project:europe-west1:volleyball-db"
+        securityContext:
+          runAsNonRoot: true
+      volumes:
+      - name: sql-script
+        configMap:
+          name: verify-data-sql

@@ -1,0 +1,47 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: load-sample-cashflow
+spec:
+  template:
+    spec:
+      serviceAccountName: balance-api
+      containers:
+      - name: load-data
+        image: postgres:15
+        command:
+        - sh
+        - -c
+        - |
+          sleep 5  # Wait for Cloud SQL Proxy to start
+          PGPASSWORD='cemW${XmyBfqhhXr7#-]<*<P$[$iY99z' psql -h 127.0.0.1 -p 5432 -U volleyball_app -d volleyball -f /sql/sample_cashflow_data.sql
+        volumeMounts:
+        - name: sql-script
+          mountPath: /sql
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+      - name: cloud-sql-proxy
+        image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:latest
+        args:
+        - "--private-ip"
+        - "atikot-org-share-project:europe-west1:volleyball-db"
+        securityContext:
+          runAsNonRoot: true
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+      volumes:
+      - name: sql-script
+        configMap:
+          name: sample-cashflow-data
+      restartPolicy: Never
+  backoffLimit: 2

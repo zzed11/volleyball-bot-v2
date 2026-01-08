@@ -1,0 +1,45 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: insert-categories
+  namespace: default
+spec:
+  template:
+    metadata:
+      labels:
+        app: insert-categories
+    spec:
+      serviceAccountName: bot-api
+      restartPolicy: Never
+      containers:
+      - name: psql-client
+        image: postgres:15
+        command:
+        - /bin/bash
+        - -c
+        - |
+          echo "Waiting for Cloud SQL Proxy..."
+          sleep 5
+          echo "Inserting missing categories..."
+          PGPASSWORD="${DB_PASSWORD}" psql -h 127.0.0.1 -p 5432 -U volleyball_app -d volleyball -f /sql/insert_missing_categories.sql
+          echo "Categories inserted"
+        env:
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-password
+              key: password
+        volumeMounts:
+        - name: sql-script
+          mountPath: /sql
+      - name: cloud-sql-proxy
+        image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.8.0
+        args:
+        - "--private-ip"
+        - "atikot-org-share-project:europe-west1:volleyball-db"
+        securityContext:
+          runAsNonRoot: true
+      volumes:
+      - name: sql-script
+        configMap:
+          name: insert-categories-sql

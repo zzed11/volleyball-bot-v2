@@ -1,0 +1,116 @@
+-- Clean existing 2026 data and load recurring transactions
+DELETE FROM financial_transactions
+WHERE EXTRACT(YEAR FROM transaction_date) = 2026;
+
+-- Auto-generated recurring transactions for 2026
+-- 52 Fridays + 52 Wednesdays = 104 total games
+
+-- Friday game income
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-01-02', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-01-09', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-01-16', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-01-23', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-01-30', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-02-06', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-02-13', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-02-20', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-02-27', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-03-06', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-03-13', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-03-20', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-03-27', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-04-03', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-04-10', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-04-17', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-04-24', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-05-01', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-05-08', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-05-15', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-05-22', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-05-29', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-06-05', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-06-12', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-06-19', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-06-26', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-07-03', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-07-10', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-07-17', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-07-24', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-07-31', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-08-07', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-08-14', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-08-21', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-08-28', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-09-04', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-09-11', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-09-18', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-09-25', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-10-02', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-10-09', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-10-16', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-10-23', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-10-30', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-11-06', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-11-13', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-11-20', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-11-27', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-12-04', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-12-11', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-12-18', 'income', 270.00, 'Friday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-12-25', 'income', 270.00, 'Friday volleyball game income');
+
+-- Wednesday game income
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-01-07', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-01-14', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-01-21', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-01-28', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-02-04', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-02-11', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-02-18', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-02-25', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-03-04', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-03-11', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-03-18', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-03-25', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-04-01', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-04-08', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-04-15', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-04-22', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-04-29', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-05-06', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-05-13', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-05-20', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-05-27', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-06-03', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-06-10', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-06-17', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-06-24', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-07-01', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-07-08', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-07-15', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-07-22', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-07-29', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-08-05', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-08-12', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-08-19', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-08-26', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-09-02', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-09-09', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-09-16', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-09-23', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-09-30', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-10-07', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-10-14', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-10-21', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-10-28', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-11-04', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-11-11', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-11-18', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-11-25', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-12-02', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-12-09', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-12-16', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-12-23', 'income', 270.00, 'Wednesday volleyball game income');
+INSERT INTO financial_transactions (transaction_date, type, amount, description) VALUES ('2026-12-30', 'income', 270.00, 'Wednesday volleyball game income');
+-- Verify 2026 data loaded
+SELECT COUNT(*) as total_2026_transactions FROM financial_transactions WHERE EXTRACT(YEAR FROM transaction_date) = 2026;

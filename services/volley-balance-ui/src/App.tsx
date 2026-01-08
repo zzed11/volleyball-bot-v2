@@ -8,7 +8,13 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Index from "./pages/Index";
 import GameSetupPage from "./pages/GameSetupPage";
 import TeamsPage from "./pages/TeamsPage";
+import GameHistoryPage from "./pages/GameHistoryPage";
+import GameDetailsPage from "./pages/GameDetailsPage";
 import LoginPage from "./pages/LoginPage";
+import TransactionsPage from "./pages/TransactionsPage";
+import CashFlowPage from "./pages/CashFlowPage";
+import ProfitLossPage from "./pages/ProfitLossPage";
+import BudgetPage from "./pages/BudgetPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +31,12 @@ const App = () => (
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/game-setup" element={<ProtectedRoute><GameSetupPage /></ProtectedRoute>} />
             <Route path="/teams" element={<ProtectedRoute><TeamsPage /></ProtectedRoute>} />
+            <Route path="/game-history" element={<ProtectedRoute><GameHistoryPage /></ProtectedRoute>} />
+            <Route path="/game-history/:id" element={<ProtectedRoute><GameDetailsPage /></ProtectedRoute>} />
+            <Route path="/transactions" element={<ProtectedRoute><TransactionsPage /></ProtectedRoute>} />
+            <Route path="/cash-flow" element={<ProtectedRoute><CashFlowPage /></ProtectedRoute>} />
+            <Route path="/profit-loss" element={<ProtectedRoute><ProfitLossPage /></ProtectedRoute>} />
+            <Route path="/budget" element={<ProtectedRoute><BudgetPage /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
