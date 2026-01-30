@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/Header';
 import { TeamCard } from '@/components/TeamCard';
 import { TeamGenerationResult } from '@/types/player';
+import { generateThreeTeams } from '@/utils/teamGenerator';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Volleyball, RefreshCw, ListChecks, TrendingUp, Users, CheckCircle2, AlertCircle, Info, Save, Calendar, Loader2 } from 'lucide-react';
+import { Volleyball, ListChecks, TrendingUp, Users, CheckCircle2, AlertCircle, Info, Save, Calendar, Loader2, Shuffle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { gamesApi } from '@/api/gamesApiClient';
 import { CreateGameWithTeamsDto } from '@/types/game';
@@ -17,6 +18,7 @@ import { toast } from 'sonner';
 
 export default function TeamsPage() {
   const [result, setResult] = useState<TeamGenerationResult | null>(null);
+  const [keepAVTogether, setKeepAVTogether] = useState(false);
   const navigate = useNavigate();
 
   // Save & Schedule state
@@ -28,12 +30,16 @@ export default function TeamsPage() {
 
   useEffect(() => {
     const stored = sessionStorage.getItem('generatedTeams');
+    const storedAV = sessionStorage.getItem('keepAVTogether');
     if (stored) {
       try {
         setResult(JSON.parse(stored));
       } catch {
         setResult(null);
       }
+    }
+    if (storedAV) {
+      setKeepAVTogether(storedAV === 'true');
     }
   }, []);
 
@@ -56,9 +62,32 @@ export default function TeamsPage() {
     setNextFridayDate(getNextFriday());
   }, []);
 
-  const handleNewGame = () => {
-    sessionStorage.removeItem('generatedTeams');
-    navigate('/game-setup');
+  const handleReshuffleTeams = () => {
+    if (!result) return;
+
+    try {
+      // Get all 18 players from current teams
+      const allPlayers = result.teams.flatMap(team => team.players);
+
+      // Regenerate teams with the same players, preserving A&V option
+      const newResult = generateThreeTeams(allPlayers, { keepAVTogether });
+
+      // Update state and session storage
+      setResult(newResult);
+      sessionStorage.setItem('generatedTeams', JSON.stringify(newResult));
+
+      toast.success('Teams reshuffled successfully!', {
+        description: `New balance: ${newResult.balanceQuality}`
+      });
+    } catch (error) {
+      console.error('Failed to reshuffle teams:', error);
+      toast.error('Failed to reshuffle teams. Please try again.');
+    }
+  };
+
+  const handleToggleAV = (checked: boolean) => {
+    setKeepAVTogether(checked);
+    sessionStorage.setItem('keepAVTogether', String(checked));
   };
 
   const handleSaveAndProceed = async () => {
@@ -165,10 +194,22 @@ export default function TeamsPage() {
               3 balanced teams ready to play
             </p>
           </div>
-          <Button onClick={handleNewGame} variant="outline" className="gap-2">
-            <RefreshCw className="h-4 w-4" />
-            New Game
-          </Button>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="av-toggle"
+                checked={keepAVTogether}
+                onCheckedChange={(checked) => handleToggleAV(checked as boolean)}
+              />
+              <Label htmlFor="av-toggle" className="text-sm font-normal cursor-pointer">
+                A&V
+              </Label>
+            </div>
+            <Button onClick={handleReshuffleTeams} variant="outline" className="gap-2">
+              <Shuffle className="h-4 w-4" />
+              Reshuffle Teams
+            </Button>
+          </div>
         </div>
 
         {/* Balance Summary */}
@@ -341,36 +382,24 @@ export default function TeamsPage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
-              <Button
-                onClick={handleSaveAndProceed}
-                disabled={isSaving || !location.trim()}
-                className="flex-1 gap-2"
-                size="lg"
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    Scheduling...
-                  </>
-                ) : (
-                  <>
-                    <Save className="h-5 w-5" />
-                    Save & Schedule Game
-                  </>
-                )}
-              </Button>
-
-              <Button
-                onClick={handleNewGame}
-                variant="outline"
-                disabled={isSaving}
-                size="lg"
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Regenerate
-              </Button>
-            </div>
+            <Button
+              onClick={handleSaveAndProceed}
+              disabled={isSaving || !location.trim()}
+              className="w-full gap-2"
+              size="lg"
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Scheduling...
+                </>
+              ) : (
+                <>
+                  <Save className="h-5 w-5" />
+                  Save & Schedule Game
+                </>
+              )}
+            </Button>
           </CardContent>
         </Card>
       </main>

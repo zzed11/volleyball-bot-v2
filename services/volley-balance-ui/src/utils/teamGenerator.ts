@@ -2,6 +2,9 @@ import { Player, Team, TeamGenerationResult, TeamGenerationOptions, PlayerPositi
 
 const TEAM_NAMES = ['Team A', 'Team B', 'Team C'];
 
+// Number of random configurations to generate and compare
+const NUM_ITERATIONS = 50;
+
 /**
  * Calculate effective rating for balancing purposes.
  * Female players are treated as 15% weaker for team balance.
@@ -56,6 +59,18 @@ function evaluateBalance(teams: Team[]): { ratingGap: number; genderVariance: nu
   return { ratingGap, genderVariance, positionScore };
 }
 
+/**
+ * Calculate a combined score for team balance (lower is better).
+ * Weights: rating gap is most important, then setter distribution, then gender variance.
+ */
+function calculateBalanceScore(ratingGap: number, genderVariance: number, positionScore: number): number {
+  // Lower score = better balance
+  // Rating gap: primary factor (weight 10)
+  // Position score: 3 = all teams have setter (subtract 5 per team with setter)
+  // Gender variance: secondary factor (weight 2)
+  return ratingGap * 10 + (3 - positionScore) * 5 + genderVariance * 2;
+}
+
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -65,97 +80,103 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-export function generateThreeTeams(
+/**
+ * Generate a single random team configuration.
+ * Uses true randomization with balanced distribution constraints.
+ */
+function generateSingleConfiguration(
   availablePlayers: Player[],
   options?: TeamGenerationOptions
-): TeamGenerationResult {
-  if (availablePlayers.length !== 18) {
-    throw new Error('Exactly 18 players are required to generate 3 teams of 6');
-  }
-
-  // Sort players by EFFECTIVE rating (descending) for snake draft
-  // This accounts for the 15% female reduction in team balancing
-  const sortedPlayers = [...availablePlayers].sort(
-    (a, b) => getEffectiveRating(b) - getEffectiveRating(a)
-  );
+): Player[][] {
+  const teamPlayers: Player[][] = [[], [], []];
 
   // Handle A&V pairing constraint (Вова + Алина together)
   let vovaPlayer: Player | null = null;
   let alinaPlayer: Player | null = null;
 
   if (options?.keepAVTogether) {
-    vovaPlayer = sortedPlayers.find(p => p.full_name === 'Вова') || null;
-    alinaPlayer = sortedPlayers.find(p => p.full_name === 'Алина') || null;
+    vovaPlayer = availablePlayers.find(p => p.full_name === 'Вова') || null;
+    alinaPlayer = availablePlayers.find(p => p.full_name === 'Алина') || null;
 
     // Only apply constraint if both are selected
     if (vovaPlayer && alinaPlayer) {
-      console.log('A&V constraint active: keeping Вова and Алина together');
+      // Place A&V pair on a RANDOM team (not always Team A)
+      const avTeam = Math.floor(Math.random() * 3);
+      teamPlayers[avTeam].push(vovaPlayer, alinaPlayer);
     } else {
       vovaPlayer = null;
       alinaPlayer = null;
     }
   }
 
-  // Remove A&V pair from sorted list if constraint is active
-  const playersToDistribute = vovaPlayer && alinaPlayer
-    ? sortedPlayers.filter(p => p !== vovaPlayer && p !== alinaPlayer)
-    : sortedPlayers;
+  // Get remaining players (excluding A&V if placed)
+  const placedPlayers = new Set(teamPlayers.flat().map(p => p.id));
+  const remainingPlayers = availablePlayers.filter(p => !placedPlayers.has(p.id));
 
-  // Separate setters and other players (excluding A&V pair if active)
-  const setters = playersToDistribute.filter(p => p.best_position === 'setter');
-  const females = playersToDistribute.filter(p => p.gender === 'female' && p.best_position !== 'setter');
-  const otherPlayers = playersToDistribute.filter(p => p.gender === 'male' && p.best_position !== 'setter');
+  // Separate by category
+  const setters = remainingPlayers.filter(p => p.best_position === 'setter');
+  const females = remainingPlayers.filter(p => p.gender === 'female' && p.best_position !== 'setter');
+  const otherPlayers = remainingPlayers.filter(p => p.gender === 'male' && p.best_position !== 'setter');
 
-  // Initialize teams
-  const teamPlayers: Player[][] = [[], [], []];
-
-  // STEP 1: Place A&V pair if constraint is active
-  if (vovaPlayer && alinaPlayer) {
-    // Find the weakest team based on effective strength (which will be empty initially)
-    // Place both on Team 0 to start (they'll balance out later in the algorithm)
-    teamPlayers[0].push(vovaPlayer, alinaPlayer);
-  }
-
-  // STEP 2: Distribute setters evenly (one per team if possible)
+  // STEP 1: Distribute setters evenly with randomization
   const shuffledSetters = shuffleArray(setters);
-  for (let i = 0; i < Math.min(3, shuffledSetters.length); i++) {
-    teamPlayers[i].push(shuffledSetters[i]);
-  }
+  const teamOrder = shuffleArray([0, 1, 2]); // Random team assignment order
 
-  // Add remaining setters to teams with fewest players
-  for (let i = 3; i < shuffledSetters.length; i++) {
-    const smallestTeamIdx = teamPlayers
-      .map((t, idx) => ({ size: t.length, idx }))
-      .sort((a, b) => a.size - b.size)[0].idx;
-    teamPlayers[smallestTeamIdx].push(shuffledSetters[i]);
-  }
-
-  // STEP 3: Distribute females evenly
-  const shuffledFemales = shuffleArray(females);
-  let femaleIdx = 0;
-  while (femaleIdx < shuffledFemales.length) {
-    for (let teamIdx = 0; teamIdx < 3 && femaleIdx < shuffledFemales.length; teamIdx++) {
-      if (teamPlayers[teamIdx].length < 6) {
-        teamPlayers[teamIdx].push(shuffledFemales[femaleIdx]);
-        femaleIdx++;
+  for (let i = 0; i < shuffledSetters.length; i++) {
+    // Find team with space that needs a setter most (round-robin with random start)
+    const targetTeam = teamOrder[i % 3];
+    if (teamPlayers[targetTeam].length < 6) {
+      teamPlayers[targetTeam].push(shuffledSetters[i]);
+    } else {
+      // Find any team with space
+      for (let t = 0; t < 3; t++) {
+        if (teamPlayers[t].length < 6) {
+          teamPlayers[t].push(shuffledSetters[i]);
+          break;
+        }
       }
     }
   }
 
-  // STEP 4: Remaining players distributed via snake draft for balance
-  // Sort by EFFECTIVE rating to account for female 15% reduction
-  const remainingPlayers = [...otherPlayers].filter(
-    p => !teamPlayers.flat().includes(p)
-  );
+  // STEP 2: Distribute females evenly with randomization
+  const shuffledFemales = shuffleArray(females);
+  const femaleTeamOrder = shuffleArray([0, 1, 2]);
 
-  remainingPlayers.sort((a, b) => getEffectiveRating(b) - getEffectiveRating(a));
+  for (let i = 0; i < shuffledFemales.length; i++) {
+    const targetTeam = femaleTeamOrder[i % 3];
+    if (teamPlayers[targetTeam].length < 6) {
+      teamPlayers[targetTeam].push(shuffledFemales[i]);
+    } else {
+      // Find any team with space
+      for (let t = 0; t < 3; t++) {
+        if (teamPlayers[t].length < 6) {
+          teamPlayers[t].push(shuffledFemales[i]);
+          break;
+        }
+      }
+    }
+  }
 
-  // Snake draft: 0,1,2,2,1,0,0,1,2...
-  let direction = 1;
-  let currentTeam = 0;
+  // STEP 3: Distribute remaining players with RANDOMIZED balanced approach
+  // Shuffle the remaining players completely
+  const shuffledOthers = shuffleArray(otherPlayers);
 
-  for (const player of remainingPlayers) {
-    // Find team with space that hasn't been filled
+  // Group by rating tiers (high/medium/low) and shuffle within each tier
+  const sortedByRating = [...shuffledOthers].sort((a, b) => getEffectiveRating(b) - getEffectiveRating(a));
+  const tierSize = Math.ceil(sortedByRating.length / 3);
+  const highTier = shuffleArray(sortedByRating.slice(0, tierSize));
+  const midTier = shuffleArray(sortedByRating.slice(tierSize, tierSize * 2));
+  const lowTier = shuffleArray(sortedByRating.slice(tierSize * 2));
+
+  // Combine tiers with randomized order within each
+  const tieredPlayers = [...highTier, ...midTier, ...lowTier];
+
+  // Randomize snake draft starting point and direction
+  let direction = Math.random() < 0.5 ? 1 : -1;
+  let currentTeam = Math.floor(Math.random() * 3);
+
+  for (const player of tieredPlayers) {
+    // Find team with space
     let attempts = 0;
     while (teamPlayers[currentTeam].length >= 6 && attempts < 6) {
       currentTeam = (currentTeam + direction + 3) % 3;
@@ -172,18 +193,65 @@ export function generateThreeTeams(
     } else if (currentTeam === 0 && direction === -1) {
       direction = 1;
     } else {
-      currentTeam += direction;
+      currentTeam = (currentTeam + direction + 3) % 3;
     }
   }
 
-  // Create team objects
-  const teams: Team[] = teamPlayers.map((players, idx) => ({
-    name: TEAM_NAMES[idx],
-    ...calculateTeamStats(players),
-  }));
+  return teamPlayers;
+}
 
-  // Calculate balance metrics using EFFECTIVE ratings
-  const { ratingGap, genderVariance, positionScore } = evaluateBalance(teams);
+/**
+ * Main team generation function.
+ * Generates multiple random configurations and picks the best balanced one.
+ * This ensures true randomization while maintaining good balance.
+ */
+export function generateThreeTeams(
+  availablePlayers: Player[],
+  options?: TeamGenerationOptions
+): TeamGenerationResult {
+  if (availablePlayers.length !== 18) {
+    throw new Error('Exactly 18 players are required to generate 3 teams of 6');
+  }
+
+  let bestTeams: Team[] | null = null;
+  let bestScore = Infinity;
+  let bestMetrics = { ratingGap: Infinity, genderVariance: Infinity, positionScore: 0 };
+
+  // Generate multiple configurations and pick the best one
+  for (let i = 0; i < NUM_ITERATIONS; i++) {
+    const teamPlayers = generateSingleConfiguration(availablePlayers, options);
+
+    // Ensure all teams have exactly 6 players
+    const valid = teamPlayers.every(t => t.length === 6);
+    if (!valid) continue;
+
+    const teams: Team[] = teamPlayers.map((players, idx) => ({
+      name: TEAM_NAMES[idx],
+      ...calculateTeamStats(players),
+    }));
+
+    const { ratingGap, genderVariance, positionScore } = evaluateBalance(teams);
+    const score = calculateBalanceScore(ratingGap, genderVariance, positionScore);
+
+    if (score < bestScore) {
+      bestScore = score;
+      bestTeams = teams;
+      bestMetrics = { ratingGap, genderVariance, positionScore };
+    }
+  }
+
+  // Fallback if no valid configuration found (shouldn't happen)
+  if (!bestTeams) {
+    const teamPlayers = generateSingleConfiguration(availablePlayers, options);
+    bestTeams = teamPlayers.map((players, idx) => ({
+      name: TEAM_NAMES[idx],
+      ...calculateTeamStats(players),
+    }));
+    const metrics = evaluateBalance(bestTeams);
+    bestMetrics = metrics;
+  }
+
+  const { ratingGap, genderVariance, positionScore } = bestMetrics;
 
   // Determine balance quality
   let balanceQuality: 'excellent' | 'good' | 'fair';
@@ -200,7 +268,7 @@ export function generateThreeTeams(
     balanceMessage = `Good balance overall. ${messages.join('. ') || 'Minor variations in distribution.'}`;
   } else {
     balanceQuality = 'fair';
-    const effectiveStrengths = teams.map(t => ({
+    const effectiveStrengths = bestTeams.map(t => ({
       name: t.name,
       strength: getTeamEffectiveStrength(t.players)
     }));
@@ -209,7 +277,7 @@ export function generateThreeTeams(
   }
 
   return {
-    teams,
+    teams: bestTeams,
     ratingGap: Math.round(ratingGap * 10) / 10,
     balanceQuality,
     balanceMessage,

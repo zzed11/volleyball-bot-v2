@@ -73,8 +73,9 @@ export default function GameSetupPage() {
       const result = generateThreeTeams(selectedPlayers, {
         keepAVTogether,
       });
-      // Store result in sessionStorage for teams page
+      // Store result and A&V option in sessionStorage for teams page
       sessionStorage.setItem('generatedTeams', JSON.stringify(result));
+      sessionStorage.setItem('keepAVTogether', String(keepAVTogether));
       navigate('/teams');
     } catch (err) {
       toast.error('Failed to generate teams. Please try again.');
