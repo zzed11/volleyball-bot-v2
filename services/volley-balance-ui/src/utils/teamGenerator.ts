@@ -95,8 +95,15 @@ function generateSingleConfiguration(
   let alinaPlayer: Player | null = null;
 
   if (options?.keepAVTogether) {
-    vovaPlayer = availablePlayers.find(p => p.full_name === 'Вова') || null;
-    alinaPlayer = availablePlayers.find(p => p.full_name === 'Алина') || null;
+    // Match names flexibly: Вова/Вовчик and Алина
+    vovaPlayer = availablePlayers.find(p =>
+      p.full_name.toLowerCase().includes('вов') ||
+      p.full_name.toLowerCase().includes('vov')
+    ) || null;
+    alinaPlayer = availablePlayers.find(p =>
+      p.full_name.toLowerCase().includes('алин') ||
+      p.full_name.toLowerCase().includes('alin')
+    ) || null;
 
     // Only apply constraint if both are selected
     if (vovaPlayer && alinaPlayer) {
